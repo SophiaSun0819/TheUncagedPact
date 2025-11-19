@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: ReferenceImageLibrary
+  m_EditorClassIdentifier: 
+  m_GuidLow: 4961055422368388103
+  m_GuidHigh: 9523698944048212920
+  m_DataStore:
+    m_Storage: []
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5633729981497636385
+      m_GuidHigh: 12957677044159552682
+    m_SerializedTextureGuid:
+      m_GuidLow: 2604870706915369963
+      m_GuidHigh: 9861300805370680793
+    m_Size: {x: 0.2, y: 0.26666668}
+    m_SpecifySize: 1
+    m_Name: DarkSky
+    m_Texture: {fileID: 2800000, guid: 5382e3eb5c1b2426d99564c7d560da88, type: 3}
+  - m_SerializedGuid:
+      m_GuidLow: 5043180601459880579
+      m_GuidHigh: 8997154154587385768
+    m_SerializedTextureGuid:
+      m_GuidLow: 10703212267143583657
+      m_GuidHigh: 9138184028418928314
+    m_Size: {x: 0.2, y: 0.26666668}
+    m_SpecifySize: 1
+    m_Name: BlueSky
+    m_Texture: {fileID: 2800000, guid: 52b257a972d99489baee0e2af559d17e, type: 3}
+  - m_SerializedGuid:
+      m_GuidLow: 5565324190818694723
+      m_GuidHigh: 10174244925403935915
+    m_SerializedTextureGuid:
+      m_GuidLow: 7232301096188586325
+      m_GuidHigh: 17231282315807057850
+    m_Size: {x: 0.2, y: 0.2659091}
+    m_SpecifySize: 1
+    m_Name: Queen
+    m_Texture: {fileID: 2800000, guid: 52fd29554b87645eba672692f8cf21ef, type: 3}
+  - m_SerializedGuid:
+      m_GuidLow: 4979244990524887255
+      m_GuidHigh: 15987738103008220316
+    m_SerializedTextureGuid:
+      m_GuidLow: 7243331384168027915
+      m_GuidHigh: 9584068792913689770
+    m_Size: {x: 0.2, y: 0.3}
+    m_SpecifySize: 1
+    m_Name: SanPaul
+    m_Texture: {fileID: 2800000, guid: 5fc6170b7b846485aafc86e0c9730185, type: 3}
