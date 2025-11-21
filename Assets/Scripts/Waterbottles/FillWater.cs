@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Events;
 
 public class ShaderWaterLevelController : MonoBehaviour
 {
@@ -25,10 +26,18 @@ public class ShaderWaterLevelController : MonoBehaviour
     [Tooltip("水位上升动画的持续时间")]
     public float raiseDuration = 1.0f;
 
+    [Header("Task Event")]
+    public UnityEvent onWaterBottleComplete; //finish drop three eyebolls
+    
+
+    
+
     // 私有变量
     private Material waterMaterial;
     private int shaderPropertyID;
     private int currentEyeCount = 0;
+    
+    private bool taskCompleted = false; 
 
     void Start()
     {
@@ -77,7 +86,17 @@ public class ShaderWaterLevelController : MonoBehaviour
 
                 // 4. 启动水位上涨动画
                 StartCoroutine(AnimateWaterLevel(newTargetLevel));
+                 CheckTaskCompletion();
             }
+        }
+    }
+    void CheckTaskCompletion()
+    {
+        if (!taskCompleted && currentEyeCount >= requiredEyesToFill)
+        {
+            taskCompleted = true;
+            Debug.Log("任务完成！");
+            onWaterBottleComplete?.Invoke(); // ← 触发事件
         }
     }
 
