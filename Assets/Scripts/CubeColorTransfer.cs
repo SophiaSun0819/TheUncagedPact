@@ -3,35 +3,40 @@ using System.Collections;
 using Oculus.Interaction;
 
 /// <summary>
-/// 修改版 CubeColorTransfer
-/// 當碰到牆壁時，直接修改牆壁的 Renderer 材質顏色
-/// 不依賴 WallColorReceiver 組件
+/// Cube Color Transfer System
+/// When cube touches a wall, it attempts to paint the wall and checks if the color is correct
+/// Integrated with EffectMeshWallInteraction for game logic validation
 /// </summary>
 public class CubeColorTransfer : MonoBehaviour
 {
-    [Header("顏色設定")]
-    [Tooltip("Cube 的顏色")]
+    [Header("Color Settings")]
+    [Tooltip("Color of this cube")]
     public Color cubeColor = Color.red;
 
-    [Header("碰撞設定")]
-    [Tooltip("是否需要在被抓取時才能改變牆面顏色")]
+    [Header("Collision Settings")]
+    [Tooltip("Require cube to be grabbed to paint walls")]
     public bool requireGrabbed = true;
 
-    [Header("視覺效果")]
-    [Tooltip("顏色過渡速度（0 = 立即改變）")]
+    [Header("Visual Effects")]
+    [Tooltip("Color transition speed (0 = instant change)")]
     public float transitionSpeed = 2f;
 
-    [Header("調試")]
-    [Tooltip("顯示調試訊息")]
+    [Header("Painting Settings")]
+    [Tooltip("Allow painting even if color is wrong (for testing)")]
+    public bool allowWrongColor = false;
+
+    [Header("Debug")]
+    [Tooltip("Show debug messages")]
     public bool debugMode = true;
 
     private Renderer _cubeRenderer;
     private Grabbable _grabbable;
     private bool _isGrabbed = false;
+    private EffectMeshWallInteraction _wallInteraction;
 
     private void Start()
     {
-        // 獲取 Renderer 並設定顏色
+        // Get Renderer and set color
         _cubeRenderer = GetComponent<Renderer>();
         if (_cubeRenderer != null)
         {
@@ -45,21 +50,28 @@ public class CubeColorTransfer : MonoBehaviour
             }
         }
 
-        // 獲取 Grabbable 組件並訂閱事件
+        // Get Grabbable component and subscribe to events
         _grabbable = GetComponent<Grabbable>();
         if (_grabbable != null)
         {
             _grabbable.WhenPointerEventRaised += HandlePointerEvent;
         }
 
+        // Find wall interaction system
+        _wallInteraction = FindObjectOfType<EffectMeshWallInteraction>();
+        if (_wallInteraction == null)
+        {
+            Debug.LogWarning("[CubeColorTransfer] EffectMeshWallInteraction not found in scene!");
+        }
+
         if (debugMode)
         {
-            Debug.Log($"[CubeColorTransfer] 初始化完成，顏色: {cubeColor}");
+            Debug.Log($"[CubeColorTransfer] Initialized with color: {cubeColor}");
         }
     }
 
     /// <summary>
-    /// 手動設定是否被抓取
+    /// Manually set grabbed state
     /// </summary>
     public void SetGrabbed(bool grabbed)
     {
@@ -67,7 +79,7 @@ public class CubeColorTransfer : MonoBehaviour
     }
 
     /// <summary>
-    /// 手動設定 Cube 顏色
+    /// Manually set cube color
     /// </summary>
     public void SetCubeColor(Color newColor)
     {
@@ -76,18 +88,25 @@ public class CubeColorTransfer : MonoBehaviour
         {
             _cubeRenderer.material.color = newColor;
         }
+
+        if (debugMode)
+        {
+            Debug.Log($"[CubeColorTransfer] Color changed to: {newColor}");
+        }
     }
 
     private void OnDestroy()
     {
-        // 取消訂閱事件
+        // Unsubscribe from events
         if (_grabbable != null)
         {
             _grabbable.WhenPointerEventRaised -= HandlePointerEvent;
         }
     }
 
-    // 處理 Grabbable 的指針事件
+    /// <summary>
+    /// Handle Grabbable pointer events
+    /// </summary>
     private void HandlePointerEvent(PointerEvent evt)
     {
         switch (evt.Type)
@@ -96,7 +115,7 @@ public class CubeColorTransfer : MonoBehaviour
                 _isGrabbed = true;
                 if (debugMode)
                 {
-                    Debug.Log("[CubeColorTransfer] Cube 被抓取");
+                    Debug.Log("[CubeColorTransfer] Cube grabbed");
                 }
                 break;
             case PointerEventType.Unselect:
@@ -104,13 +123,15 @@ public class CubeColorTransfer : MonoBehaviour
                 _isGrabbed = false;
                 if (debugMode)
                 {
-                    Debug.Log("[CubeColorTransfer] Cube 被釋放");
+                    Debug.Log("[CubeColorTransfer] Cube released");
                 }
                 break;
         }
     }
 
-    // 物理碰撞
+    /// <summary>
+    /// Physics collision
+    /// </summary>
     private void OnCollisionEnter(Collision collision)
     {
         if (requireGrabbed && !_isGrabbed)
@@ -120,14 +141,16 @@ public class CubeColorTransfer : MonoBehaviour
 
         if (debugMode)
         {
-            Debug.Log($"[CubeColorTransfer] 碰撞到: {collision.gameObject.name}");
+            Debug.Log($"[CubeColorTransfer] Collision with: {collision.gameObject.name}");
         }
 
-        // 嘗試改變碰撞物件的顏色
-        TryChangeObjectColor(collision.gameObject);
+        // Try to paint the object
+        TryPaintObject(collision.gameObject, collision.GetContact(0));
     }
 
-    // Trigger 碰撞
+    /// <summary>
+    /// Trigger collision
+    /// </summary>
     private void OnTriggerEnter(Collider other)
     {
         if (requireGrabbed && !_isGrabbed)
@@ -137,56 +160,182 @@ public class CubeColorTransfer : MonoBehaviour
 
         if (debugMode)
         {
-            Debug.Log($"[CubeColorTransfer] 觸發碰撞: {other.gameObject.name}");
+            Debug.Log($"[CubeColorTransfer] Trigger collision with: {other.gameObject.name}");
         }
 
-        // 嘗試改變碰撞物件的顏色
-        TryChangeObjectColor(other.gameObject);
+        // Try to paint the object (no contact point available for trigger)
+        TryPaintObject(other.gameObject);
     }
 
     /// <summary>
-    /// 嘗試改變物件的顏色
+    /// Try to paint an object
     /// </summary>
-    private void TryChangeObjectColor(GameObject obj)
+    private void TryPaintObject(GameObject obj, ContactPoint? contact = null)
     {
         if (obj == null) return;
 
         string objName = obj.name.ToLower();
 
-        // 檢查是否為牆壁或相關物件
+        // Check if object is a wall
         bool isWall = objName.Contains("wall") ||
                       objName.Contains("effect") ||
                       objName.Contains("mesh") ||
                       objName.Contains("anchor") ||
                       objName.Contains("plane");
 
-        if (!isWall && debugMode)
+        if (!isWall)
         {
-            Debug.Log($"[CubeColorTransfer] {obj.name} 不是牆壁，跳過");
+            if (debugMode)
+            {
+                Debug.Log($"[CubeColorTransfer] {obj.name} is not a wall, skipping");
+            }
             return;
         }
 
-        // 獲取 Renderer
-        Renderer renderer = obj.GetComponent<Renderer>();
-        if (renderer == null)
+        // If wall interaction system exists, use it
+        if (_wallInteraction != null)
         {
-            renderer = obj.GetComponentInChildren<Renderer>();
+            PaintWallWithValidation(obj, contact);
         }
-
-        if (renderer != null)
+        else
         {
-            ChangeRendererColor(renderer, obj.name);
-        }
-        else if (debugMode)
-        {
-            Debug.LogWarning($"[CubeColorTransfer] {obj.name} 沒有 Renderer");
+            // Fallback: directly paint without validation
+            if (debugMode)
+            {
+                Debug.LogWarning("[CubeColorTransfer] No wall interaction system, painting directly");
+            }
+            DirectPaintWall(obj);
         }
     }
 
     /// <summary>
-    /// 改變 Renderer 的顏色
+    /// Paint wall with game logic validation
     /// </summary>
-    private void ChangeRendererColor(Renderer renderer, string objectName)
+    private void PaintWallWithValidation(GameObject wall, ContactPoint? contact)
+    {
+        // Determine wall direction
+        EffectMeshWallInteraction.WallDirection wallDirection = DetermineWallDirection(wall, contact);
+
+        if (debugMode)
+        {
+            Debug.Log($"[CubeColorTransfer] Attempting to paint {wallDirection} wall with color {cubeColor}");
+        }
+
+        // Try to paint wall through wall interaction system
+        bool success = _wallInteraction.TryPaintWall(wallDirection, cubeColor);
+
+        if (success)
+        {
+            // Color is correct - paint the wall
+            if (debugMode)
+            {
+                Debug.Log($"[CubeColorTransfer] SUCCESS! Correct color for {wallDirection} wall");
+            }
+            DirectPaintWall(wall);
+        }
+        else
+        {
+            // Color is wrong
+            if (debugMode)
+            {
+                Debug.LogWarning($"[CubeColorTransfer] FAIL! Wrong color for {wallDirection} wall");
+            }
+
+            // If allow wrong color is enabled (for testing), still paint it
+            if (allowWrongColor)
+            {
+                if (debugMode)
+                {
+                    Debug.Log("[CubeColorTransfer] Painting anyway (allowWrongColor is enabled)");
+                }
+                DirectPaintWall(wall);
+            }
+            // Otherwise, wall interaction system already showed error message to player
+        }
+    }
+
+    /// <summary>
+    /// Directly paint wall without validation (fallback or testing mode)
+    /// </summary>
+    private void DirectPaintWall(GameObject wall)
+    {
+        Renderer renderer = wall.GetComponent<Renderer>();
+        if (renderer == null)
+        {
+            renderer = wall.GetComponentInChildren<Renderer>();
+        }
+
+        if (renderer != null)
+        {
+            ChangeRendererColor(renderer, cubeColor);
+        }
+        else if (debugMode)
+        {
+            Debug.LogWarning($"[CubeColorTransfer] {wall.name} has no Renderer");
+        }
+    }
+
+    /// <summary>
+    /// Determine wall direction based on wall object
+    /// </summary>
+    private EffectMeshWallInteraction.WallDirection DetermineWallDirection(GameObject wall, ContactPoint? contact)
+    {
+        Vector3 normal;
+
+        // If we have contact point, use its normal
+        if (contact.HasValue)
+        {
+            normal = contact.Value.normal;
+        }
+        else
+        {
+            // Otherwise, calculate direction from player to wall
+            Transform playerTransform = Camera.main?.transform;
+            if (playerTransform == null)
+            {
+                Debug.LogWarning("[CubeColorTransfer] Camera.main not found, defaulting to North wall");
+                return EffectMeshWallInteraction.WallDirection.North;
+            }
+
+            Vector3 directionToWall = (wall.transform.position - playerTransform.position).normalized;
+            normal = -directionToWall; // Invert to get wall's outward normal
+        }
+
+        // Normalize the normal vector
+        normal = normal.normalized;
+
+        // Calculate dot products with cardinal directions
+        float dotNorth = Vector3.Dot(normal, Vector3.forward);  // Z+
+        float dotSouth = Vector3.Dot(normal, Vector3.back);     // Z-
+        float dotEast = Vector3.Dot(normal, Vector3.right);     // X+
+        float dotWest = Vector3.Dot(normal, Vector3.left);      // X-
+
+        // Find maximum dot product
+        float maxDot = Mathf.Max(dotNorth, dotSouth, dotEast, dotWest);
+
+        // Determine direction
+        EffectMeshWallInteraction.WallDirection direction;
+        if (maxDot == dotNorth)
+            direction = EffectMeshWallInteraction.WallDirection.North;
+        else if (maxDot == dotSouth)
+            direction = EffectMeshWallInteraction.WallDirection.South;
+        else if (maxDot == dotEast)
+            direction = EffectMeshWallInteraction.WallDirection.East;
+        else
+            direction = EffectMeshWallInteraction.WallDirection.West;
+
+        if (debugMode)
+        {
+            Debug.Log($"[CubeColorTransfer] Wall direction determined: {direction} (normal: {normal})");
+        }
+
+        return direction;
+    }
+
+    /// <summary>
+    /// Change renderer color with transition
+    /// </summary>
+    private void ChangeRendererColor(Renderer renderer, Color targetColor)
     {
         if (renderer == null || renderer.material == null) return;
 
@@ -194,41 +343,41 @@ public class CubeColorTransfer : MonoBehaviour
         {
             if (transitionSpeed > 0)
             {
-                // 使用協程進行平滑過渡
-                StartCoroutine(SmoothColorTransition(renderer, cubeColor));
+                // Smooth transition
+                StartCoroutine(SmoothColorTransition(renderer, targetColor));
             }
             else
             {
-                // 立即改變顏色
-                renderer.material.color = cubeColor;
+                // Instant change
+                renderer.material.color = targetColor;
             }
 
-            // 嘗試設定其他顏色屬性
+            // Try to set other common color properties
             if (renderer.material.HasProperty("_Color"))
             {
-                renderer.material.SetColor("_Color", cubeColor);
+                renderer.material.SetColor("_Color", targetColor);
             }
             if (renderer.material.HasProperty("_BaseColor"))
             {
-                renderer.material.SetColor("_BaseColor", cubeColor);
+                renderer.material.SetColor("_BaseColor", targetColor);
             }
 
             if (debugMode)
             {
-                Debug.Log($"[CubeColorTransfer] ✅ 改變了 {objectName} 的顏色為 {cubeColor}");
+                Debug.Log($"[CubeColorTransfer] Changed {renderer.gameObject.name} color to {targetColor}");
             }
         }
         catch (System.Exception e)
         {
             if (debugMode)
             {
-                Debug.LogError($"[CubeColorTransfer] 改變顏色時出錯: {e.Message}");
+                Debug.LogError($"[CubeColorTransfer] Error changing color: {e.Message}");
             }
         }
     }
 
     /// <summary>
-    /// 平滑顏色過渡
+    /// Smooth color transition coroutine
     /// </summary>
     private IEnumerator SmoothColorTransition(Renderer renderer, Color targetColor)
     {
@@ -251,11 +400,36 @@ public class CubeColorTransfer : MonoBehaviour
             yield return null;
         }
 
-        // 確保最終顏色正確
+        // Ensure final color is accurate
         if (renderer != null && renderer.material != null)
         {
             renderer.material.color = targetColor;
         }
     }
 
+    /// <summary>
+    /// Manual test: Paint all walls with this cube's color
+    /// </summary>
+    [ContextMenu("Test Paint All Walls")]
+    private void TestPaintAllWalls()
+    {
+        if (_wallInteraction == null)
+        {
+            _wallInteraction = FindObjectOfType<EffectMeshWallInteraction>();
+        }
+
+        if (_wallInteraction == null)
+        {
+            Debug.LogError("[CubeColorTransfer] Cannot test: EffectMeshWallInteraction not found");
+            return;
+        }
+
+        Debug.Log("[CubeColorTransfer] Testing painting all walls...");
+
+        foreach (EffectMeshWallInteraction.WallDirection direction in System.Enum.GetValues(typeof(EffectMeshWallInteraction.WallDirection)))
+        {
+            bool success = _wallInteraction.TryPaintWall(direction, cubeColor);
+            Debug.Log($"[CubeColorTransfer] {direction} wall: {(success ? "SUCCESS" : "FAIL")}");
+        }
+    }
 }

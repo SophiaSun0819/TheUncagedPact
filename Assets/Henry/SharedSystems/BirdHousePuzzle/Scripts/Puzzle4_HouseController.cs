@@ -33,9 +33,9 @@ public class Puzzle4_HouseController : MonoBehaviour
         var rb = piece.GetComponent<Rigidbody>();
         if (rb)
         {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
+            rb.isKinematic   = true;   // ignore forces
+            rb.useGravity    = false;  // don't let gravity pull it down
+            rb.linearVelocity      = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
 
