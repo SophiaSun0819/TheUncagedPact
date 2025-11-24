@@ -30,7 +30,7 @@ public class GameManager : MonoSingleton<GameManager>
     /// Team members can subscribe to this event in their scripts
     /// Usage: GameManager.Instance.OnLevel1Complete += YourMethod;
     /// </summary>
-    public event Action OnLevel1Complete;
+    public static event Action OnLevel1Complete;
 
     protected override void Awake()
     {

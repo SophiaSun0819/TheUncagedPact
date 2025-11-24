@@ -266,7 +266,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d6502f6324b4241edb6e219d7911839e, type: 2}
+  - {fileID: 2100000, guid: 9087e801d20dd2343a2aab5675e0cfed, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -339,10 +339,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 12673193}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b005e516b20a4d2399d7865ceb01627, type: 3}
+  m_Script: {fileID: 11500000, guid: 86ba8dc1fedf5408b9d1307e7fe1e937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeColor: {r: 1, g: 0.90058327, b: 0, a: 1}
+  cubeColor: {r: 0, g: 0, b: 1, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
   allowWrongColor: 0
@@ -3251,7 +3251,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 26b9cd3eabf6a49e0b3ad3b5355a1287, type: 2}
+  - {fileID: 2100000, guid: 574c0ae78f92e4f5e99d92f0e28c2c75, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3324,7 +3324,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 462748423}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b005e516b20a4d2399d7865ceb01627, type: 3}
+  m_Script: {fileID: 11500000, guid: 86ba8dc1fedf5408b9d1307e7fe1e937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   cubeColor: {r: 1, g: 0, b: 0, a: 1}
@@ -8235,7 +8235,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0fc1ac92dfdfb4e6b898bb817f89d96a, type: 2}
+  - {fileID: 2100000, guid: 05dcdacac45a97c4a8902e1b53c17eab, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -8308,10 +8308,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1286950675}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b005e516b20a4d2399d7865ceb01627, type: 3}
+  m_Script: {fileID: 11500000, guid: 86ba8dc1fedf5408b9d1307e7fe1e937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeColor: {r: 0, g: 0, b: 1, a: 1}
+  cubeColor: {r: 1, g: 0, b: 0, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
   allowWrongColor: 0
@@ -9483,7 +9483,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d6502f6324b4241edb6e219d7911839e, type: 2}
+  - {fileID: 2100000, guid: 0856dd2ca8933483084d5fec242d1bd9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9556,10 +9556,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1444798910}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b005e516b20a4d2399d7865ceb01627, type: 3}
+  m_Script: {fileID: 11500000, guid: 86ba8dc1fedf5408b9d1307e7fe1e937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeColor: {r: 0, g: 1, b: 0.3864882, a: 1}
+  cubeColor: {r: 1, g: 0, b: 0, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
   allowWrongColor: 0

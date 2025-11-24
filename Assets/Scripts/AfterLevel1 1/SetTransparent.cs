@@ -37,6 +37,12 @@ public class SetTransparent : MonoBehaviour
     }
     private void Update()
 {
+    if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+        {
+            setLevelComplete = true;
+            Debug.Log("Left Trigger pressed → level complete!");
+        }
+        
     if (setLevelComplete && !coroutineStarted)
     {
         coroutineStarted = true;
