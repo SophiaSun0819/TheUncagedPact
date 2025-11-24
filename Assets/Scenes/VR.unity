@@ -345,6 +345,7 @@ MonoBehaviour:
   cubeColor: {r: 1, g: 0.90058327, b: 0, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
+  allowWrongColor: 0
   debugMode: 1
 --- !u!1 &16061809
 GameObject:
@@ -3329,6 +3330,7 @@ MonoBehaviour:
   cubeColor: {r: 1, g: 0, b: 0, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
+  allowWrongColor: 0
   debugMode: 1
 --- !u!1 &467097941
 GameObject:
@@ -8309,9 +8311,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b005e516b20a4d2399d7865ceb01627, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeColor: {r: 0, g: 0.6942835, b: 1, a: 1}
+  cubeColor: {r: 0, g: 0, b: 1, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
+  allowWrongColor: 0
   debugMode: 1
 --- !u!1 &1328299623
 GameObject:
@@ -9559,6 +9562,7 @@ MonoBehaviour:
   cubeColor: {r: 0, g: 1, b: 0.3864882, a: 1}
   requireGrabbed: 1
   transitionSpeed: 2
+  allowWrongColor: 0
   debugMode: 1
 --- !u!1 &1446313791
 GameObject:
@@ -10707,6 +10711,7 @@ MonoBehaviour:
   totalWallsRequired: 4
   levelCompleteSound: {fileID: 0}
   debugMode: 1
+  delayBeforeNextLevel: 3
 --- !u!4 &1664225680
 Transform:
   m_ObjectHideFlags: 0
