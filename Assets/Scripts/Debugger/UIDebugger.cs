@@ -9,23 +9,23 @@ public class UIDebugger : MonoBehaviour
     [Header("自動測試")]
     [SerializeField] private bool autoTestOnStart = true;
     [SerializeField] private float autoTestDelay = 2f;
-    
+
     [Header("手動測試按鍵")]
     [SerializeField] private KeyCode testPromptKey = KeyCode.T;
     [SerializeField] private KeyCode testSuccessKey = KeyCode.Y;
     [SerializeField] private KeyCode testErrorKey = KeyCode.U;
     [SerializeField] private KeyCode testClueKey = KeyCode.I;
-    
+
     void Start()
     {
         Debug.Log("=== UIDebugger 啟動 ===");
-        
+
         if (autoTestOnStart)
         {
             Invoke(nameof(RunDiagnostics), autoTestDelay);
         }
     }
-    
+
     void Update()
     {
         // 按 T - 測試一般提示
@@ -33,36 +33,36 @@ public class UIDebugger : MonoBehaviour
         {
             TestPrompt();
         }
-        
+
         // 按 Y - 測試成功訊息
         if (Input.GetKeyDown(testSuccessKey))
         {
             TestSuccess();
         }
-        
+
         // 按 U - 測試錯誤訊息
         if (Input.GetKeyDown(testErrorKey))
         {
             TestError();
         }
-        
+
         // 按 I - 測試線索
         if (Input.GetKeyDown(testClueKey))
         {
             TestClue();
         }
-        
+
         // 按 ESC - 關閉 UI
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (UIPromptManager.Instance != null)
             {
                 UIPromptManager.Instance.Hide();
-                Debug.Log("✅ 已關閉 UI");
+                Debug.Log("Close UI");
             }
         }
     }
-    
+
     /// <summary>
     /// 執行完整診斷
     /// </summary>
@@ -71,7 +71,7 @@ public class UIDebugger : MonoBehaviour
         Debug.Log("========================================");
         Debug.Log("開始 UI 系統診斷...");
         Debug.Log("========================================");
-        
+
         // 1. 檢查 UIPromptManager
         Debug.Log("\n【檢查 1】UIPromptManager 實例");
         if (UIPromptManager.Instance == null)
@@ -87,7 +87,7 @@ public class UIDebugger : MonoBehaviour
         {
             Debug.Log("✅ UIPromptManager.Instance 存在");
         }
-        
+
         // 2. 檢查 GameManager
         Debug.Log("\n【檢查 2】GameManager 實例");
         if (GameManager.Instance == null)
@@ -99,24 +99,24 @@ public class UIDebugger : MonoBehaviour
         {
             Debug.Log("✅ GameManager.Instance 存在");
         }
-        
+
         // 3. 測試 UI 顯示
         Debug.Log("\n【檢查 3】測試 UI 顯示功能");
         try
         {
             UIPromptManager.Instance.ShowPrompt(
-                "🎉 診斷成功！",
-                "UI 系統運作正常！\n\n如果你看到這個訊息，代表一切正常。",
-                "💡 按 ESC 關閉 | 按 T/Y/U/I 測試其他 UI"
+                "Success Init UIPromptManager!",
+                "Success",
+                "ESC to exit"
             );
-            Debug.Log("✅ UI 顯示功能正常");
+            Debug.Log("UIPromptManager works!!!");
         }
         catch (System.Exception e)
         {
             Debug.LogError($"❌ UI 顯示失敗：{e.Message}");
             Debug.LogError($"→ 錯誤堆疊：{e.StackTrace}");
         }
-        
+
         Debug.Log("\n========================================");
         Debug.Log("診斷完成！");
         Debug.Log("========================================");
@@ -127,20 +127,20 @@ public class UIDebugger : MonoBehaviour
         Debug.Log($"  {testClueKey} - 測試線索");
         Debug.Log("  ESC - 關閉 UI");
     }
-    
+
     /// <summary>
     /// 測試一般提示
     /// </summary>
     void TestPrompt()
     {
         Debug.Log($"按下 {testPromptKey} 鍵 - 測試一般提示");
-        
+
         if (UIPromptManager.Instance != null)
         {
             UIPromptManager.Instance.ShowPrompt(
-                "📢 一般提示",
-                "這是一個普通的提示訊息\n\n支援多行文字\n可以顯示各種資訊",
-                "💡 提示：這是 Hint 文字"
+                "Normal Hint",
+                "This is a normal hint\n\nSupport multiple lines\nShow information",
+                "Hint Message"
             );
             Debug.Log("✅ 已顯示一般提示");
         }
@@ -149,14 +149,14 @@ public class UIDebugger : MonoBehaviour
             Debug.LogError("❌ UIPromptManager.Instance 是 NULL");
         }
     }
-    
+
     /// <summary>
     /// 測試成功訊息
     /// </summary>
     void TestSuccess()
     {
         Debug.Log($"按下 {testSuccessKey} 鍵 - 測試成功訊息");
-        
+
         if (UIPromptManager.Instance != null)
         {
             UIPromptManager.Instance.ShowSuccess(
@@ -171,14 +171,14 @@ public class UIDebugger : MonoBehaviour
             Debug.LogError("❌ UIPromptManager.Instance 是 NULL");
         }
     }
-    
+
     /// <summary>
     /// 測試錯誤訊息
     /// </summary>
     void TestError()
     {
         Debug.Log($"按下 {testErrorKey} 鍵 - 測試錯誤訊息");
-        
+
         if (UIPromptManager.Instance != null)
         {
             UIPromptManager.Instance.ShowError(
@@ -193,14 +193,14 @@ public class UIDebugger : MonoBehaviour
             Debug.LogError("❌ UIPromptManager.Instance 是 NULL");
         }
     }
-    
+
     /// <summary>
     /// 測試線索
     /// </summary>
     void TestClue()
     {
         Debug.Log($"按下 {testClueKey} 鍵 - 測試線索");
-        
+
         if (UIPromptManager.Instance != null)
         {
             UIPromptManager.Instance.ShowClue(
@@ -215,7 +215,7 @@ public class UIDebugger : MonoBehaviour
             Debug.LogError("❌ UIPromptManager.Instance 是 NULL");
         }
     }
-    
+
     /// <summary>
     /// 檢查場景設定
     /// </summary>
@@ -223,7 +223,7 @@ public class UIDebugger : MonoBehaviour
     void CheckSceneSetup()
     {
         Debug.Log("=== 檢查場景設定 ===");
-        
+
         // 檢查 PromptCanvas
         var canvas = GameObject.Find("PromptCanvas");
         if (canvas == null)
@@ -233,7 +233,7 @@ public class UIDebugger : MonoBehaviour
         else
         {
             Debug.Log($"✅ 找到 PromptCanvas（Active: {canvas.activeSelf}）");
-            
+
             // 檢查 UIPromptManager 組件
             var uiManager = canvas.GetComponent<UIPromptManager>();
             if (uiManager == null)
@@ -245,7 +245,7 @@ public class UIDebugger : MonoBehaviour
                 Debug.Log("✅ UIPromptManager 組件已掛載");
             }
         }
-        
+
         // 檢查 PromptPanel
         var panel = GameObject.Find("PromptPanel");
         if (panel == null)
@@ -259,7 +259,7 @@ public class UIDebugger : MonoBehaviour
             {
                 Debug.LogWarning("⚠️ PromptPanel 應該初始為隱藏（Active = False）");
             }
-            
+
             // 檢查 CanvasGroup
             var canvasGroup = panel.GetComponent<CanvasGroup>();
             if (canvasGroup == null)
@@ -271,7 +271,7 @@ public class UIDebugger : MonoBehaviour
                 Debug.Log("✅ PromptPanel 有 CanvasGroup 組件");
             }
         }
-        
+
         // 檢查 GameManager
         var gameManager = GameObject.Find("GameManager");
         if (gameManager == null)
@@ -282,7 +282,7 @@ public class UIDebugger : MonoBehaviour
         {
             Debug.Log($"✅ 找到 GameManager（Active: {gameManager.activeSelf}）");
         }
-        
+
         Debug.Log("=== 檢查完成 ===");
     }
 }

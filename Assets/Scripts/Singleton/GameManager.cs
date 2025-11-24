@@ -66,7 +66,7 @@ public class GameManager : MonoSingleton<GameManager>
             {
                 UIPromptManager.Instance.ShowPromptWithStyle(
                     "THE UNCAGED PACT",
-                    "A bird trapped in a cage of lies. Dreams of freedom in the skies. Help it escape... Find the true color of liberty",
+                    "A bird trapped in a cage of lies\nDreams of freedom in the skies\n\nHelp it escape...\nFind the true color of liberty",
                     "Point at the walls and press trigger to discover clues",
                     PromptStyle.Default
                 );
