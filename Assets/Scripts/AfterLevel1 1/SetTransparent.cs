@@ -17,17 +17,49 @@ public class SetTransparent : MonoBehaviour
     private int _checkCount = 0;
     private bool _hasFoundWalls = false;
 
+    [Header("set level1 complete manually")]
+
+    public bool setLevelComplete=false;
+    private bool coroutineStarted = false;
+
+
+
     private void Start()
     {
-        if (debugMode)
-            Debug.Log("[ReplaceMeshMaterial] 開始替換牆壁材質");
+        // if (debugMode)
+        //     Debug.Log("[ReplaceMeshMaterial] 開始替換牆壁材質");
 
-        // 立即執行一次
-        // ForceReplaceMaterials();
+        // // 立即執行一次
+        // // ForceReplaceMaterials();
 
-        // 持續檢查
+        // // 持續檢查
+        // StartCoroutine(ContinuousCheck());
+    }
+    private void Update()
+{
+    if (setLevelComplete && !coroutineStarted)
+    {
+        coroutineStarted = true;
         StartCoroutine(ContinuousCheck());
     }
+}
+//      private void OnEnable()
+//     {
+//         // 订阅事件
+//        GameManager.OnLevel1Complete +=  OnLevel1Completed;
+//     }
+
+//     private void OnDisable()
+//     {
+//         // 取消订阅事件
+//          GameManager.OnLevel1Complete  -=  OnLevel1Completed;
+//     }
+
+//     private void OnLevel1Completed()
+// {
+//     StartCoroutine(ContinuousCheck());
+// }
+
 
     public void ManualReplace()
     {
