@@ -1,81 +1,83 @@
 using UnityEngine;
+using System;
 
 public class Puzzle4_HouseController : MonoBehaviour
 {
-    [Header("State")]
-    public PuzzleState puzzleState;      // drag your ScriptableObject (PuzzleState_Main)
-    public GameObject finalHousePrefab;  // optional: nicer final model
+    [Header("State (optional)")]
+    public PuzzleState puzzleState;          // can be left null
+    public GameObject finalHousePrefab;      // optional nicer final model
 
     [Header("Slots")]
-    public Slot[] slots;                 // base, pole, house
+    public Slot[] slots;                     // base_slot, pole_slot, house_slot
 
-    [Header("Bird Perches / Sound Boxes")]
-    public GameObject[] birdPerches;  
+    [Header("Enable After Build")]
+    public GameObject[] birdSoundBoxes;      // soundbox, soundbox2, soundbox3
+
     int _placedCount = 0;
-    bool _completed = false;
+    bool _completed   = false;
+
+    // 🔔 NEW EVENT
+    public static event Action BirdPuzzleCompleted;
 
     public void TryPlacePiece(Slot slot, HousePiece piece)
     {
         if (_completed) return;
         if (piece.isLocked) return;
-        if (piece.pieceId != slot.requiredPieceId) return;
 
-        // Snap
-        piece.transform.SetPositionAndRotation(
-            slot.snapPoint.position,
-            slot.snapPoint.rotation
-        );
-        piece.transform.SetParent(slot.snapPoint, true);
+        // Wrong piece for this slot? Ignore.
+        if (piece.pieceId != slot.requiredPieceId)
+            return;
 
-        // Freeze physics
+        // Use the snapPoint if assigned, otherwise the slot's own transform
+        Transform sp = slot.snapPoint != null ? slot.snapPoint : slot.transform;
+
+        // Snap the piece into place in WORLD space
+        piece.transform.SetPositionAndRotation(sp.position, sp.rotation);
+
+        // 🔒 Freeze physics so it stays where we put it
         var rb = piece.GetComponent<Rigidbody>();
         if (rb)
         {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
+            rb.isKinematic   = true;   // ignore forces
+            rb.useGravity    = false;  // don't let gravity pull it down
+            rb.linearVelocity      = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Disable colliders so they don't fight the snap
-        var cols = piece.GetComponentsInChildren<Collider>();
-        foreach (var c in cols) c.enabled = false;
+        // Keep collider solid (not trigger), so it just "sits" there
+        var col = piece.GetComponent<Collider>();
+        if (col)
+        {
+            col.enabled   = true;
+            col.isTrigger = false;
+        }
 
-        // Disable grab scripts
-        DisableGrabScripts(piece);
+        // If you still have a disableOnLock array on HousePiece, you can optionally do:
+        if (piece.disableOnLock != null)
+        {
+            foreach (var b in piece.disableOnLock)
+            {
+                if (b) b.enabled = false;   // disable Grabbable / GrabInteractable / etc.
+            }
+        }
 
         piece.isLocked = true;
         _placedCount++;
 
         if (_placedCount >= slots.Length)
-            CompletePuzzle();
-    }
-
-
-    void DisableGrabScripts(HousePiece piece)
-    {
-        // Look at *all* MonoBehaviours on the piece
-        var behaviours = piece.GetComponents<MonoBehaviour>();
-
-        foreach (var b in behaviours)
         {
-            if (b == null) continue;
-            string typeName = b.GetType().Name;
-
-            // Catch things like: HandGrabInteractable, GrabInteractable, Grabbable, etc.
-            if (typeName.Contains("Grab") || typeName.Contains("Grabbable"))
-            {
-                b.enabled = false;
-                Debug.Log("[HousePuzzle] Disabled grab component: " + typeName, b);
-            }
+            CompletePuzzle();
         }
     }
 
 
+
     void CompletePuzzle()
     {
-        Debug.Log("[HousePuzzle] COMPLETE!");
+        if (_completed) return;
         _completed = true;
+
+        Debug.Log("[HousePuzzle] >>> PUZZLE COMPLETE <<<");
 
         if (puzzleState)
             puzzleState.CageBuilt = true;
@@ -83,14 +85,15 @@ public class Puzzle4_HouseController : MonoBehaviour
         if (finalHousePrefab)
             finalHousePrefab.SetActive(true);
 
-        // Enable bird perches / sound boxes AFTER house is built
-        if (birdPerches != null)
+        // Turn on the bird sound boxes
+        if (birdSoundBoxes != null)
         {
-            foreach (var perch in birdPerches)
+            foreach (var go in birdSoundBoxes)
             {
-                if (perch)
-                    perch.SetActive(true);
+                if (go) go.SetActive(true);
             }
         }
+         // 🔔 NEW: Invoke event
+        BirdPuzzleCompleted?.Invoke();
     }
 }
