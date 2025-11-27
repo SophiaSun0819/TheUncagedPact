@@ -3,57 +3,66 @@ using UnityEngine.Events;
 
 public class SoundBox : MonoBehaviour
 {
-    [Header("Settings")]
-    // ID of the correct sound/bird for this box
-    public int correctSoundID;
+    [Header("Matching")]
+    public int correctSoundID = 0;          // <-- MAKE SURE THIS NAME MATCHES INSPECTOR
+                                            // Set this in the Inspector (e.g. 0,1,2 or 1,2,3)
 
     [Header("Snapping")]
-    // Where to park the ball/bird on this box (assign a child transform)
-    public Transform snapPoint;
-    // If true, only correct ID will snap. If false, anything that enters snaps.
-    public bool snapOnlyIfCorrect = true;
+    public Transform snapPoint;             // where to park the bird/ball
+    public bool snapOnlyIfCorrect = true;   // if false, snap anything, if true, only correct one
 
     [Header("Events")]
     public UnityEvent OnCorrect;
     public UnityEvent OnWrong;
 
+    // prevents double-count for this box
+    bool _alreadySatisfied = false;
+
     private void OnTriggerEnter(Collider other)
     {
-        // Only react to objects that have a SoundBall
-        SoundBall ball = other.GetComponent<SoundBall>();
-        if (!ball) return;
+        var bird = other.GetComponentInParent<SoundBall>();
+        if (bird == null) return;
 
-        bool isCorrect = (ball.soundID == correctSoundID);
+        // If this bird is already locked, ignore it
+        if (bird.IsLocked) return;
 
-        // --- SNAP LOGIC ---
-        if (snapPoint && (!snapOnlyIfCorrect || isCorrect))
+        Debug.Log($"[SoundBox] {name} EXPECTS {correctSoundID}, GOT {bird.soundID} from {bird.name}");
+
+        if (bird.soundID == correctSoundID)
         {
-            Transform t = ball.transform;
+            Debug.Log($"[SoundBox] CORRECT match in {name}");
 
-            // Move/rotate onto perch
-            t.position = snapPoint.position;
-            t.rotation = snapPoint.rotation;
-
-            // Stop physics so it doesn't fall/roll
-            Rigidbody rb = ball.GetComponent<Rigidbody>();
-            if (rb)
+            if (!_alreadySatisfied)
             {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-                rb.isKinematic = true;
-            }
-        }
+                _alreadySatisfied = true;
 
-        // --- EVENTS / FEEDBACK ---
-        if (isCorrect)
-        {
-            Debug.Log($"[SoundBox] {name}: CORRECT ball {ball.soundID}");
+                if (Puzzle4_HouseController.Instance != null)
+                    Puzzle4_HouseController.Instance.RegisterCorrectBird();
+            }
+
             OnCorrect?.Invoke();
+
+            // Snap bird to its perch
+            if (snapPoint != null)
+            {
+                bird.transform.position = snapPoint.position;
+                bird.transform.rotation = snapPoint.rotation;
+            }
+
+            // 🔒 Lock the bird so it can't be moved or grabbed again
+            bird.Lock();
         }
         else
         {
-            Debug.Log($"[SoundBox] {name}: WRONG ball {ball.soundID}");
+            Debug.Log($"[SoundBox] WRONG match in {name}");
             OnWrong?.Invoke();
+
+            if (!snapOnlyIfCorrect && snapPoint != null)
+            {
+                bird.transform.position = snapPoint.position;
+                bird.transform.rotation = snapPoint.rotation;
+            }
         }
     }
+
 }

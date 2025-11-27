@@ -2,38 +2,26 @@ using UnityEngine;
 
 public class PhysicalButtonZone : MonoBehaviour
 {
-    [Header("References")]
     public PhysicalButton button;
+    public ZoneToggle toggle;       // add this
 
-    [Header("Which controller?")]
-    public bool useRightController = true;   // true = right, false = left
-
-    bool _controllerInside;
+    bool _controllerInside = false;
 
     void OnTriggerEnter(Collider other)
     {
-        // For now, assume anything that enters could be the controller.
-        // (Optional: later you can filter by tag/layer if you want.)
         _controllerInside = true;
+        if (toggle) toggle.SetInside(true);   // add this
     }
 
     void OnTriggerExit(Collider other)
     {
         _controllerInside = false;
+        if (toggle) toggle.SetInside(false);  // add this
     }
 
-    void Update()
+    public void OnButtonInput()
     {
-        if (!_controllerInside || button == null)
-            return;
-
-        var which = useRightController ? OVRInput.Controller.RTouch
-                                       : OVRInput.Controller.LTouch;
-
-        // Front trigger (index)
-        if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, which))
-        {
+        if (_controllerInside)
             button.Press();
-        }
     }
 }

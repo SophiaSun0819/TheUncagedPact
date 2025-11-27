@@ -3,21 +3,33 @@ using System;
 
 public class Puzzle4_HouseController : MonoBehaviour
 {
-    // 🔔 NEW EVENT
-    public static event Action BirdPuzzleCompleted;
+    // 🔥 ADD THIS — Singleton instance
+    public static Puzzle4_HouseController Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     [Header("State (optional)")]
-    public PuzzleState puzzleState;          // can be left null
-    public GameObject finalHousePrefab;      // optional nicer final model
+    public PuzzleState puzzleState;
+    public GameObject finalHousePrefab;
 
     [Header("Slots")]
-    public Slot[] slots;                     // base_slot, pole_slot, house_slot
+    public Slot[] slots;
 
     [Header("Enable After Build")]
-    public GameObject[] birdSoundBoxes;      // soundbox, soundbox2, soundbox3
+    public GameObject[] birdSoundBoxes;
 
+    [Header("Bird Sound Puzzle")]
+    public int requiredBirds = 3;
+
+    int _correctBirds = 0;
+    bool _birdPuzzleDone = false;
     int _placedCount = 0;
-    bool _completed   = false;
+    bool _completed = false;
+
+    public static event Action BirdPuzzleCompleted;
 
     public void TryPlacePiece(Slot slot, HousePiece piece)
     {
@@ -27,30 +39,29 @@ public class Puzzle4_HouseController : MonoBehaviour
         if (piece.pieceId != slot.requiredPieceId)
             return;
 
-        Transform sp = slot.snapPoint != null ? slot.snapPoint : slot.transform;
-        piece.transform.SetPositionAndRotation(sp.position, sp.rotation);
+        // ---- SNAP ----
+        Transform t = piece.transform;
+        t.SetParent(null, true);
+        t.position = slot.snapPoint.position;
+        t.rotation = slot.snapPoint.rotation;
 
+        // ---- STOP PHYSICS ----
         var rb = piece.GetComponent<Rigidbody>();
         if (rb)
         {
-            rb.isKinematic   = true;   // ignore forces
-            rb.useGravity    = false;  // don't let gravity pull it down
-            rb.linearVelocity      = Vector3.zero;
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = Vector3.zero;
+#else
+            rb.velocity = Vector3.zero;
+#endif
             rb.angularVelocity = Vector3.zero;
+            rb.useGravity = false;
+            rb.isKinematic = true;
         }
 
+        // ---- DISABLE COLLISION ----
         var col = piece.GetComponent<Collider>();
-        if (col)
-        {
-            col.enabled = true;
-            col.isTrigger = false;
-        }
-
-        if (piece.disableOnLock != null)
-        {
-            foreach (var b in piece.disableOnLock)
-                if (b) b.enabled = false;
-        }
+        if (col) col.enabled = false;
 
         piece.isLocked = true;
         _placedCount++;
@@ -64,21 +75,30 @@ public class Puzzle4_HouseController : MonoBehaviour
         if (_completed) return;
         _completed = true;
 
-        Debug.Log("[HousePuzzle] >>> PUZZLE COMPLETE <<<");
-
         if (puzzleState)
             puzzleState.CageBuilt = true;
 
         if (finalHousePrefab)
             finalHousePrefab.SetActive(true);
 
+        // Enable sound puzzle boxes
         if (birdSoundBoxes != null)
         {
             foreach (var go in birdSoundBoxes)
                 if (go) go.SetActive(true);
         }
+    }
 
-        // 🔔 NEW: Invoke event
-        BirdPuzzleCompleted?.Invoke();
+    public void RegisterCorrectBird()
+    {
+        if (_birdPuzzleDone) return;
+
+        _correctBirds++;
+
+        if (_correctBirds >= requiredBirds)
+        {
+            _birdPuzzleDone = true;
+            BirdPuzzleCompleted?.Invoke();
+        }
     }
 }
