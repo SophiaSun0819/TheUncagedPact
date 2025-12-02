@@ -18,6 +18,10 @@ public class UIPromptManager : MonoSingleton<UIPromptManager>
     [SerializeField] private TextMeshProUGUI hintText;
     [SerializeField] private Button closeButton;
 
+    [Header("模式設定")]
+    [Tooltip("是否為 Mirror 模式（動態生成）")]
+    [SerializeField] private bool isMirrorMode = false;
+
     [Header("動畫設定")]
     [SerializeField] private float fadeInDuration = 0.3f;
     [SerializeField] private float fadeOutDuration = 0.2f;
@@ -37,19 +41,73 @@ public class UIPromptManager : MonoSingleton<UIPromptManager>
     [SerializeField] private PromptStyle errorStyle;
     [SerializeField] private PromptStyle clueStyle;
 
+    [Header("調試")]
+    [SerializeField] private bool debugMode = true;
+
     private CanvasGroup canvasGroup;
     private Coroutine currentAnimation;
     private bool isShowing = false;
 
     protected override void Awake()
     {
-        base.Awake();
+        // 如果是 Mirror 模式，等待被手動註冊為 Singleton
+        if (isMirrorMode)
+        {
+            if (debugMode)
+            {
+                Debug.Log("[UIPromptManager] Mirror mode - waiting for registration");
+            }
+            InitializeComponents();
+            return;
+        }
 
-        // 如果不是場景中已有的實例，銷毀自己
+        // 正常的 Singleton 初始化
+        base.Awake();
+        InitializeComponents();
+    }
+
+    /// <summary>
+    /// 手動註冊為 Singleton Instance（給 Mirror 模式使用）
+    /// </summary>
+    public void RegisterAsSingleton()
+    {
+        if (debugMode)
+        {
+            Debug.Log("[UIPromptManager] Registering as Singleton Instance...");
+        }
+
+        // 如果已經有 Instance 存在，先銷毀舊的
+        if (_instance != null && _instance != this)
+        {
+            if (debugMode)
+            {
+                Debug.Log("[UIPromptManager] Replacing old instance with Mirror UI");
+            }
+
+            // 隱藏並禁用舊的 Instance
+            if (_instance.promptPanel != null)
+            {
+                _instance.promptPanel.SetActive(false);
+            }
+
+            // 不要銷毀，只是禁用（可能還有其他引用）
+            _instance.enabled = false;
+        }
+
+        // 設定自己為新的 Instance
+        _instance = this;
+
+        if (debugMode)
+        {
+            Debug.Log("[UIPromptManager] Successfully registered as singleton!");
+        }
+    }
+
+    private void InitializeComponents()
+    {
         if (promptCanvas == null || promptPanel == null)
         {
-            Debug.LogError("[UIPromptManager] ❌ UI 組件未設定！請在場景中手動創建 PromptCanvas 並設定所有引用。");
-            Destroy(gameObject);
+            Debug.LogError("[UIPromptManager] UI components not assigned!");
             return;
         }
 
@@ -66,11 +124,10 @@ public class UIPromptManager : MonoSingleton<UIPromptManager>
         promptPanel.SetActive(false);
         canvasGroup.alpha = 0;
 
-        // 設定關閉按鈕
-        if (closeButton != null)
-            closeButton.onClick.AddListener(() => Hide());
-
-        Debug.Log("[UIPromptManager] 已初始化");
+        if (debugMode)
+        {
+            Debug.Log($"[UIPromptManager] Initialized (Mirror Mode: {isMirrorMode})");
+        }
     }
 
     #region 公開方法 - 顯示不同類型的提示
