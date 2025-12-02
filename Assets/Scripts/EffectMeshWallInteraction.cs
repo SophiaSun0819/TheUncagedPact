@@ -319,7 +319,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
         string directionName = GetDirectionName(direction);
 
         UIPromptManager.Instance?.ShowSuccess(
-            "✨ Correct!",
+            "Correct!",
             $"{directionName} wall has been painted!\n\nThe cage weakens...",
             $"Progress: {GetPaintedWallCount()}/4"
         );
