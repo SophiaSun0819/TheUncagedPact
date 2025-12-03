@@ -4,8 +4,7 @@ using UnityEngine.Events;
 public class SoundBox : MonoBehaviour
 {
     [Header("Matching")]
-    public int correctSoundID = 0;          // <-- MAKE SURE THIS NAME MATCHES INSPECTOR
-                                            // Set this in the Inspector (e.g. 0,1,2 or 1,2,3)
+    public int correctSoundID = 0;
 
     [Header("Snapping")]
     public Transform snapPoint;             // where to park the bird/ball
@@ -42,11 +41,15 @@ public class SoundBox : MonoBehaviour
 
             OnCorrect?.Invoke();
 
-            // Snap bird to its perch
+            // --- IMPORTANT PART: detach from hand before snapping ---
+            Transform t = bird.transform;
+            t.SetParent(null, true);   // drop any grab parent (hand/controller)
+
+            // Snap bird to its perch in world space
             if (snapPoint != null)
             {
-                bird.transform.position = snapPoint.position;
-                bird.transform.rotation = snapPoint.rotation;
+                t.position = snapPoint.position;
+                t.rotation = snapPoint.rotation;
             }
 
             // 🔒 Lock the bird so it can't be moved or grabbed again
@@ -59,10 +62,11 @@ public class SoundBox : MonoBehaviour
 
             if (!snapOnlyIfCorrect && snapPoint != null)
             {
-                bird.transform.position = snapPoint.position;
-                bird.transform.rotation = snapPoint.rotation;
+                Transform t = bird.transform;
+                t.SetParent(null, true);         // also detach if you want even on wrong
+                t.position = snapPoint.position;
+                t.rotation = snapPoint.rotation;
             }
         }
     }
-
 }
