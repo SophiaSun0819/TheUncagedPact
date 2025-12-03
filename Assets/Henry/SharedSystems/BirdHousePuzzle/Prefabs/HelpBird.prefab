@@ -1302,8 +1302,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 721b06ac178f4e2488133f6300274d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startAlpha: 0.08
-  fadeDuration: 0.7
+  startAlpha: 0.2
+  fadeDuration: 1
   renderers: []
   changeColorTag: ChangeColorTrigger
 --- !u!114 &752676066146059813
