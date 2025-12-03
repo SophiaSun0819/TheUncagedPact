@@ -7,7 +7,7 @@ using UnityEngine;
 /// <typeparam name="T">繼承的類型</typeparam>
 public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-    private static T _instance;
+    protected static T _instance;
     private static object _lock = new object();
     private static bool _applicationIsQuitting = false;
 
