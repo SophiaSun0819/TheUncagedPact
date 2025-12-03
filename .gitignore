@@ -97,3 +97,13 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+# XR Simulation TEMP (Unity 自动生成，每次启动都会变化)
+Assets/XR/Temp/
+Assets/XR/Temp.meta
+
+# Ignore Unity auto-generated XR Simulation runtime settings
+Assets/XR/Resources/XRSimulationRuntimeSettings.asset
+Assets/XR/Resources/XRSimulationRuntimeSettings.asset.meta
+
+ProjectSettings/Packages/com.unity.probuilder/Settings.json
+ProjectSettings/Packages/com.unity.probuilder/Settings.json.meta
