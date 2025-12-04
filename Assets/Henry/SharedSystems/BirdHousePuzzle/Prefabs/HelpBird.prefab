@@ -1138,7 +1138,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3602675264117016045}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9a7676b01585ce43908639a27765dfc, type: 3}
   m_Name: 
@@ -1302,7 +1302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 721b06ac178f4e2488133f6300274d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startAlpha: 0.2
+  startAlpha: 0.4
   fadeDuration: 1
   renderers: []
   changeColorTag: ChangeColorTrigger
@@ -1321,8 +1321,8 @@ MonoBehaviour:
   playerTarget: {fileID: 0}
   pageHoldPoint: {fileID: 2618792414314042778}
   homePoint: {fileID: 0}
-  flySpeed: 1.5
-  turnSpeed: 5
+  flySpeed: 0.5
+  turnSpeed: 3
   arriveDistance: 0.05
   hoverDistance: 0.6
   hoverHeight: 0.2

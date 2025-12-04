@@ -8,15 +8,15 @@ public class NewPageSpawner : MonoBehaviour
 
     [Header("Bird Delivery Setup")]
     public Transform playerTarget;          // XR camera or a child in front of player
-    public Transform birdHomePoint;         // where the bird should return after delivery
+    public Transform birdHomePoint;         // where HelpBird returns after delivery
 
-    // Note: pageHoldPoint is set on the BirdPickUp component itself (on the prefab)
+    [Header("Audio")]
+    public AudioSource birdPuzzleCompleteSfx;  // plays when all birds are correct (before delivery)
 
     private bool hasSpawned = false;
 
     void OnEnable()
     {
-        // Listen for sound puzzle completion
         Puzzle4_HouseController.BirdPuzzleCompleted += OnBirdPuzzleCompleted;
     }
 
@@ -27,10 +27,13 @@ public class NewPageSpawner : MonoBehaviour
 
     private void OnBirdPuzzleCompleted()
     {
-        if (!hasSpawned)
-        {
-            SpawnPage();
-        }
+        if (hasSpawned) return;
+
+        // 🔊 play puzzle-complete sound (bird sound puzzle)
+        if (birdPuzzleCompleteSfx != null)
+            birdPuzzleCompleteSfx.Play();
+
+        SpawnPage();
     }
 
     private void SpawnPage()
@@ -55,27 +58,12 @@ public class NewPageSpawner : MonoBehaviour
         BirdPickUp courier = Object.FindFirstObjectByType<BirdPickUp>();
         if (courier != null)
         {
-            // Give the bird the player target (XR camera / stop point)
             if (playerTarget != null)
-            {
                 courier.SetPlayerTarget(playerTarget);
-            }
-            else
-            {
-                Debug.LogWarning("[PageSpawner] playerTarget is not assigned on NewPageSpawner.", this);
-            }
 
-            // Give the bird its home perch
             if (birdHomePoint != null)
-            {
                 courier.SetHomePoint(birdHomePoint);
-            }
-            else
-            {
-                Debug.LogWarning("[PageSpawner] birdHomePoint is not assigned on NewPageSpawner.", this);
-            }
 
-            // Start the delivery flight with this page
             courier.StartDelivery(pageInstance.transform);
         }
         else

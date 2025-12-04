@@ -9,7 +9,10 @@ public class SoundBall : MonoBehaviour
     public MonoBehaviour[] disableOnLock;    // Grabbable, GrabInteractable, etc.
 
     bool _isLocked = false;
-    Vector3 _originalLocalScale;
+
+    // We still remember the original WORLD scale for reset,
+    // but we won't touch scale when locking.
+    Vector3 _originalWorldScale;
 
     // For out-of-bounds reset
     Vector3 _homePosition;
@@ -20,12 +23,31 @@ public class SoundBall : MonoBehaviour
 
     void Awake()
     {
-        _originalLocalScale = transform.localScale;
+        _originalWorldScale = transform.lossyScale;
 
         // Save initial spawn as "home"
         _homePosition = transform.position;
         _homeRotation = transform.rotation;
         _homeParent   = transform.parent;
+    }
+
+    // Helper: apply a desired WORLD scale even if we have a scaled parent
+    void ApplyWorldScale(Vector3 worldScale)
+    {
+        Transform p = transform.parent;
+        if (p == null)
+        {
+            transform.localScale = worldScale;
+        }
+        else
+        {
+            Vector3 ps = p.lossyScale;
+            transform.localScale = new Vector3(
+                ps.x != 0 ? worldScale.x / ps.x : worldScale.x,
+                ps.y != 0 ? worldScale.y / ps.y : worldScale.y,
+                ps.z != 0 ? worldScale.z / ps.z : worldScale.z
+            );
+        }
     }
 
     /// <summary>
@@ -37,8 +59,9 @@ public class SoundBall : MonoBehaviour
         if (_isLocked) return;
         _isLocked = true;
 
-        // Restore scale (in case grab parenting messed it up)
-        transform.localScale = _originalLocalScale;
+        // 🚫 IMPORTANT: Do NOT change scale here.
+        // The bird was already unparented and snapped by SoundBox,
+        // so its size is already correct.
 
         // Stop all physics
         var rb = GetComponent<Rigidbody>();
@@ -87,7 +110,7 @@ public class SoundBall : MonoBehaviour
         // Reset pose
         transform.position = _homePosition;
         transform.rotation = _homeRotation;
-        transform.localScale = _originalLocalScale;
+        ApplyWorldScale(_originalWorldScale);
 
         // Reset physics so it can be grabbed/used again
         var rb = GetComponent<Rigidbody>();

@@ -4,121 +4,135 @@ using UnityEngine.Events;
 
 public class ShaderWaterLevelController : MonoBehaviour
 {
-    [Header("ShaderSettings")]
-    // 在 Inspector 中拖拽 Water 模型的 MeshRenderer 组件到此槽位
+    [Header("Shader Settings")]
+    // Drag the water MeshRenderer here in the Inspector
     public MeshRenderer waterMeshRenderer;
 
-    // Shader 中控制水位的 Float 属性的引用名称 (例如: "_Fill")
-    // 请确保名称与 Shader Graph 中的属性名称一致！
+    // Name of the float property in your shader (e.g. "_Fill")
     public string shaderWaterLevelPropertyName = "_Fill";
 
-    [Header("WaterLevel")]
-    [Tooltip("水体的起始水位值 (Shader 属性值)")]
+    [Header("Water Level")]
+    [Tooltip("Starting water level (shader value)")]
     public float initialLevel = 0.0f;
 
-    [Tooltip("水体的目标水位值 (Shader 属性值)")]
+    [Tooltip("Target water level (shader value) when all eyes are in")]
     public float targetLevel = 1.0f;
 
-    [Tooltip("需要多少个 Eye 对象才能达到目标水位")]
+    [Tooltip("How many Eye objects are needed to reach target level")]
     public int requiredEyesToFill = 3;
 
     [Header("Animation")]
-    [Tooltip("水位上升动画的持续时间")]
+    [Tooltip("Duration of one step of water rising")]
     public float raiseDuration = 1.0f;
 
+    [Header("Audio")]
+    [Tooltip("Optional: sound played when an eye drops in")]
+    public AudioSource splashAudio;
+
     [Header("Task Event")]
-    public UnityEvent onWaterBottleComplete; //finish drop three eyebolls
-    
+    public UnityEvent onWaterBottleComplete; // fired when all eyes are in
 
-    
-
-    // 私有变量
-    private Material waterMaterial;
-    private int shaderPropertyID;
-    private int currentEyeCount = 0;
-    
-    private bool taskCompleted = false; 
+    // Private state
+    Material waterMaterial;
+    int shaderPropertyID;
+    int currentEyeCount = 0;
+    bool taskCompleted = false;
 
     void Start()
     {
-        // 1. 获取 MeshRenderer 上的 Material 实例
         if (waterMeshRenderer != null)
         {
             waterMaterial = waterMeshRenderer.material;
-            // 获取 Shader 属性的 ID (性能优化)
             shaderPropertyID = Shader.PropertyToID(shaderWaterLevelPropertyName);
 
-            // 2. 初始化水位到起始值
+            // Initialize water level
             waterMaterial.SetFloat(shaderPropertyID, initialLevel);
         }
         else
         {
-            Debug.LogError("Water MeshRenderer 槽位未设置! 无法控制水位 Shader。");
+            Debug.LogError("[Water] waterMeshRenderer is not assigned!");
             enabled = false;
         }
     }
 
-    // 当其他 Collider 进入水瓶的主 Collider 区域时触发
-    void OnCollisionEnter(Collision collision)
+    /// <summary>
+    /// This is now a TRIGGER, not a collision.
+    /// Make sure the water bottle collider has IsTrigger = true
+    /// and the eyes have a Rigidbody + tag = "Eye".
+    /// </summary>
+    void OnTriggerEnter(Collider other)
     {
-        // 检查碰撞到的物体是否是眼球，且未被计算过
-        // 假设眼球对象的 Tag 是 "Eye"
-        if (collision.gameObject.CompareTag("Eye"))
+        // Only react to eyes
+        if (!other.CompareTag("Eye"))
+            return;
+
+        // Get the rigidbody on the eye
+        Rigidbody eyeRb = other.attachedRigidbody;
+        Collider eyeCollider = other;
+
+        // Only count if collider is still enabled (so we don't double-count)
+        if (eyeCollider != null && eyeCollider.enabled)
         {
-            // 确保眼球有 Rigidbody，且没有被抓取 (需要根据您的抓取组件调整)
-            Rigidbody eyeRb = collision.gameObject.GetComponent<Rigidbody>();
-
-            // 假设我们通过禁用 Collider 来标记眼球已被“使用”
-            Collider eyeCollider = collision.collider;
-            if (eyeCollider != null && eyeCollider.enabled)
+            // 1. Disable collider & freeze physics so it "sits" in the water
+            eyeCollider.enabled = false;
+            if (eyeRb != null)
             {
-                // 1. 禁用眼球的碰撞体和刚体，使其停止影响场景并防止重复计数
-                eyeCollider.enabled = false;
-                if (eyeRb != null) eyeRb.isKinematic = true;
-
-                // 2. 累加眼球计数
-                currentEyeCount++;
-                Debug.Log($"眼球掉入! 当前计数: {currentEyeCount} / {requiredEyesToFill}");
-
-                // 3. 计算新的目标水位
-                float progress = Mathf.Clamp01((float)currentEyeCount / requiredEyesToFill);
-                float newTargetLevel = Mathf.Lerp(initialLevel, targetLevel, progress);
-
-                // 4. 启动水位上涨动画
-                StartCoroutine(AnimateWaterLevel(newTargetLevel));
-                 CheckTaskCompletion();
+#if UNITY_6000_0_OR_NEWER
+                eyeRb.linearVelocity = Vector3.zero;
+#else
+                eyeRb.velocity = Vector3.zero;
+#endif
+                eyeRb.angularVelocity = Vector3.zero;
+                eyeRb.isKinematic = true;
+                eyeRb.useGravity = false;
             }
+
+            // 2. Play splash sound
+            if (splashAudio != null)
+            {
+                splashAudio.Play();
+            }
+
+            // 3. Increase count & update water level
+            currentEyeCount++;
+            Debug.Log($"[Water] Eye dropped in! {currentEyeCount}/{requiredEyesToFill}");
+
+            float progress = Mathf.Clamp01((float)currentEyeCount / requiredEyesToFill);
+            float newTargetLevel = Mathf.Lerp(initialLevel, targetLevel, progress);
+
+            StartCoroutine(AnimateWaterLevel(newTargetLevel));
+
+            // 4. Check if puzzle is complete
+            CheckTaskCompletion();
         }
     }
+
     void CheckTaskCompletion()
     {
         if (!taskCompleted && currentEyeCount >= requiredEyesToFill)
         {
             taskCompleted = true;
-            Debug.Log("任务完成！");
-            onWaterBottleComplete?.Invoke(); // ← 触发事件
+            Debug.Log("[Water] All eyes collected – task complete!");
+            onWaterBottleComplete?.Invoke();
         }
     }
 
-    // 平滑地改变 Shader 中的水位属性
     IEnumerator AnimateWaterLevel(float newTargetLevel)
     {
-        float elapsedTime = 0;
-        // 获取当前水位值作为起始值
+        float elapsedTime = 0f;
         float startLevel = waterMaterial.GetFloat(shaderPropertyID);
 
         while (elapsedTime < raiseDuration)
         {
             float t = elapsedTime / raiseDuration;
-            // 使用 Lerp 进行平滑插值，更新 Shader 属性
             float currentLevel = Mathf.Lerp(startLevel, newTargetLevel, t);
             waterMaterial.SetFloat(shaderPropertyID, currentLevel);
 
             elapsedTime += Time.deltaTime;
-            yield return null; // 等待下一帧
+            yield return null;
         }
 
-        // 确保最终值精确
+        // Snap to final value
         waterMaterial.SetFloat(shaderPropertyID, newTargetLevel);
     }
 }

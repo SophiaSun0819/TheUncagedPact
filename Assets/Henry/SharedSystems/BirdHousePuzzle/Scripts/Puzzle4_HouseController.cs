@@ -3,7 +3,7 @@ using System;
 
 public class Puzzle4_HouseController : MonoBehaviour
 {
-    // 🔥 ADD THIS — Singleton instance
+    // 🔥 Singleton instance so other scripts (SoundBox, etc.) can find us
     public static Puzzle4_HouseController Instance;
 
     void Awake()
@@ -23,6 +23,10 @@ public class Puzzle4_HouseController : MonoBehaviour
 
     [Header("Bird Sound Puzzle")]
     public int requiredBirds = 3;
+
+    [Header("Audio")]
+    public AudioSource pieceSnapSfx;       // plays every time a house piece snaps
+    public AudioSource houseCompleteSfx;   // plays when all house pieces are placed
 
     int _correctBirds = 0;
     bool _birdPuzzleDone = false;
@@ -66,6 +70,10 @@ public class Puzzle4_HouseController : MonoBehaviour
         piece.isLocked = true;
         _placedCount++;
 
+        // 🔊 play snap sfx for each piece
+        if (pieceSnapSfx != null)
+            pieceSnapSfx.Play();
+
         if (_placedCount >= slots.Length)
             CompletePuzzle();
     }
@@ -80,6 +88,10 @@ public class Puzzle4_HouseController : MonoBehaviour
 
         if (finalHousePrefab)
             finalHousePrefab.SetActive(true);
+
+        // 🔊 play "house complete" sfx once
+        if (houseCompleteSfx != null)
+            houseCompleteSfx.Play();
 
         // Enable sound puzzle boxes
         if (birdSoundBoxes != null)
