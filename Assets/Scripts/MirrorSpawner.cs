@@ -11,6 +11,14 @@ public class MirrorSpawner : MonoBehaviour
     public float maxRaycastDistance = 10f;
     public float spawnDelay = 3f;
 
+    [Header("Height Settings")]
+    [Tooltip("Mirror spawn height (meters from floor)")]
+    public float spawnHeight = 1.5f;
+    [Tooltip("Use player's eye height instead of fixed height")]
+    public bool usePlayerEyeHeight = false;
+    [Tooltip("Offset from player eye height (if enabled)")]
+    public float eyeHeightOffset = 0f;
+
     [Header("Filter Settings")]
     [Tooltip("Ignore objects with these names when raycasting")]
     public string[] ignoreObjectNames = new string[] { "Cube", "Sphere", "Hand", "Controller" };
@@ -138,7 +146,39 @@ public class MirrorSpawner : MonoBehaviour
 
     private void SpawnMirror(Vector3 position, Vector3 normal)
     {
-        Vector3 spawnPosition = position + normal * offsetFromWall;
+        Vector3 spawnPosition;
+
+        // === 根據設定選擇高度計算方式 ===
+        if (usePlayerEyeHeight)
+        {
+            // 使用玩家當前眼睛高度
+            Transform playerCamera = Camera.main.transform;
+            if (playerCamera != null)
+            {
+                float playerHeight = playerCamera.position.y;
+                spawnPosition = new Vector3(position.x, playerHeight + eyeHeightOffset, position.z);
+
+                if (debugMode)
+                {
+                    Debug.Log($"[MirrorSpawner] Using player eye height: {playerHeight}m + offset: {eyeHeightOffset}m");
+                }
+            }
+            else
+            {
+                // 備用：使用固定高度
+                spawnPosition = new Vector3(position.x, spawnHeight, position.z);
+                Debug.LogWarning("[MirrorSpawner] Camera not found, using fixed height");
+            }
+        }
+        else
+        {
+            // 使用固定高度
+            spawnPosition = new Vector3(position.x, spawnHeight, position.z);
+        }
+
+        // 添加牆面偏移
+        spawnPosition += normal * offsetFromWall;
+
         Quaternion spawnRotation = Quaternion.LookRotation(-normal);
 
         spawnedMirror = Instantiate(mirrorPrefab, spawnPosition, spawnRotation);
@@ -148,7 +188,9 @@ public class MirrorSpawner : MonoBehaviour
         {
             Debug.Log("[MirrorSpawner] ========================================");
             Debug.Log("[MirrorSpawner] SUCCESS! Mirror spawned!");
-            Debug.Log($"[MirrorSpawner] Position: {spawnPosition}");
+            Debug.Log($"[MirrorSpawner] Original wall hit: {position}");
+            Debug.Log($"[MirrorSpawner] Final position: {spawnPosition}");
+            Debug.Log($"[MirrorSpawner] Height: {spawnPosition.y}m");
             Debug.Log($"[MirrorSpawner] Rotation: {spawnRotation.eulerAngles}");
             Debug.Log("[MirrorSpawner] ========================================");
         }
