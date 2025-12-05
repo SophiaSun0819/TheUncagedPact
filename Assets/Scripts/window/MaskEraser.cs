@@ -12,6 +12,7 @@ public class MaskEraser_LocalDecal : MonoBehaviour
     public float brushInterval = 0.02f;   // 两次绘制的最小距离
 
     private Vector3 lastHitPoint;
+    
 
     void Update()
     {
