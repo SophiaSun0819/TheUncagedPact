@@ -115,7 +115,7 @@ void SpawnTable()
     // MeshRenderer[] allRenderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
     
     List<GameObject> tableTargets = new List<GameObject>();
-    string targetNamePart = "table"; // 要查找的名称部分
+    string targetNamePart = "bed"; // 要查找的名称部分
     string targetNamePart2 = "mesh";
     
     foreach (MeshRenderer renderer in allRenderers)
