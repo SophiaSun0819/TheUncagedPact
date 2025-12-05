@@ -59,17 +59,18 @@ public class EffectMeshWallInteraction : MonoBehaviour
 
     void Start()
     {
-        // 獲取玩家相機
         playerCamera = Camera.main?.transform;
+
         if (playerCamera == null)
         {
             Debug.LogError("[EffectMeshWall] 找不到主相機！");
         }
+        else
+        {
+            Debug.Log($"[EffectMeshWall] 找到相機: {playerCamera.name}");
+        }
 
-        // 獲取 MRUK (Scene Understanding)
         mruk = FindObjectOfType<MRUK>();
-
-        // 初始化預設線索
         InitializeDefaultClues();
 
         if (debugMode)
@@ -110,14 +111,20 @@ public class EffectMeshWallInteraction : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             inputDetected = true;
+            Debug.Log("[EffectMeshWall] 偵測到 Trigger 按下！");
         }
 
         if (!inputDetected) return;
+        Debug.Log("[EffectMeshWall] 準備發射射線...");
+        Debug.Log($"[EffectMeshWall] 起點: {playerCamera.position}");
+        Debug.Log($"[EffectMeshWall] 方向: {playerCamera.forward}");
+        Debug.Log($"[EffectMeshWall] 距離: {interactionDistance}m");
 
         // 發射射線偵測牆壁
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.position, playerCamera.forward, out hit, interactionDistance, wallLayerMask))
         {
+            Debug.Log($"[EffectMeshWall] 擊中: {hit.collider.gameObject.name}");
             if (debugMode)
             {
                 Debug.Log($"[EffectMeshWall] 射線擊中: {hit.collider.gameObject.name}");
@@ -129,6 +136,8 @@ public class EffectMeshWallInteraction : MonoBehaviour
                 OnWallClicked(hit);
             }
         }
+        else
+            Debug.Log("[EffectMeshWall] 沒有擊中任何東西");
     }
 
     /// <summary>
@@ -142,7 +151,8 @@ public class EffectMeshWallInteraction : MonoBehaviour
         if (objName.Contains("wall") ||
             objName.Contains("effectmesh") ||
             objName.Contains("plane") ||
-            objName.Contains("anchor"))
+            objName.Contains("anchor") ||
+            objName.Contains("cube"))
         {
             return true;
         }
