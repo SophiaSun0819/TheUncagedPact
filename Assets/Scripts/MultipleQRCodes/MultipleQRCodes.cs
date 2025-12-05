@@ -21,6 +21,8 @@ public class MultipleQRCodes : MonoBehaviour
     public TextMeshProUGUI debugText;
     public TextMeshProUGUI debugText2;
     public GameObject object1;
+
+    public event Action QRCodeComplete; //qrcode Puzzle complete
     public void OntrackableAdded(MRUKTrackable trackable){
        
         
@@ -40,6 +42,7 @@ public class MultipleQRCodes : MonoBehaviour
                  var boundsAreaRect = trackable.PlaneRect.Value;
             trackBoundsInstance.transform.localScale = new Vector3(boundsAreaRect.width, boundsAreaRect.height, 0.01f);
             trackBoundsInstance.transform.localPosition = new Vector3(boundsAreaRect.center.x, boundsAreaRect.center.y, 0.01f);
+            QRCodeComplete?.Invoke();
             }
             else
             {
