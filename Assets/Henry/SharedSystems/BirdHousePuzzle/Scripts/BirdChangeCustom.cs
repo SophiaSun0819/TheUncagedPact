@@ -6,59 +6,50 @@ public class BirdChangeCustom : MonoBehaviour
 {
     [Header("Fading Settings")]
     [Range(0f, 1f)]
-    public float startAlpha = 0.1f;         // transparency at spawn
-    public float fadeDuration = 0.5f;       // fade time
+    public float startAlpha = 0.1f;
+    public float fadeDuration = 0.5f;
 
-    [Header("Optional: assign bird renderers manually")]
+    [Header("Optional Renderers")]
     public Renderer[] renderers;
 
-    [Header("Trigger Tag for Bottle Lid")]
+    [Header("Trigger Tag")]
     public string changeColorTag = "ChangeColorTrigger";
 
-    // internal state
-    private bool canFade = false;
-    private bool hasFaded = false;
+    bool canFade = false;
+    bool hasFaded = false;
 
-    private struct MatInfo
+    struct MatInfo
     {
         public Material mat;
         public Color fadedColor;
         public Color originalColor;
     }
 
-    private List<MatInfo> mats = new List<MatInfo>();
+    List<MatInfo> mats = new List<MatInfo>();
+    static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
+    static readonly int ColorID     = Shader.PropertyToID("_Color");
 
-    // common shader properties
-    private static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
-    private static readonly int ColorID     = Shader.PropertyToID("_Color");
+    ShaderWaterLevelController waterController;
 
-    // ------------------------------------------
-    // INIT — called by the spawner after Instantiate()
-    // ------------------------------------------
-    private ShaderWaterLevelController waterController;
-
+    // Called by spawner
     public void Init(ShaderWaterLevelController controller)
     {
         waterController = controller;
 
-        if (waterController != null)
+        if (controller != null)
         {
-            waterController.onWaterBottleComplete.AddListener(OnWaterComplete);
-        }
-        else
-        {
-            Debug.LogWarning("[BirdChangeColor] Init() was given a null controller!");
+            controller.onWaterBottleComplete.AddListener(OnWaterComplete);
+
+            // If water puzzle was already complete before bird spawned:
+            if (controller.IsComplete)
+                OnWaterComplete();
         }
     }
 
-    // ------------------------------------------
     void Awake()
     {
-        // Auto-grab all renderers in children (covers 3-part bird)
         if (renderers == null || renderers.Length == 0)
-        {
-            renderers = GetComponentsInChildren<Renderer>(includeInactive: true);
-        }
+            renderers = GetComponentsInChildren<Renderer>(true);
     }
 
     void Start()
@@ -66,18 +57,13 @@ public class BirdChangeCustom : MonoBehaviour
         SetupFadedMaterials();
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         if (waterController != null)
-        {
             waterController.onWaterBottleComplete.RemoveListener(OnWaterComplete);
-        }
     }
 
-    // ------------------------------------------
-    // SETUP — prepares all materials for fading
-    // ------------------------------------------
-    private void SetupFadedMaterials()
+    void SetupFadedMaterials()
     {
         mats.Clear();
 
@@ -89,7 +75,6 @@ public class BirdChangeCustom : MonoBehaviour
             {
                 if (!m) continue;
 
-                // Determine which color property to use
                 Color original;
 
                 if (m.HasProperty(BaseColorID))
@@ -97,13 +82,11 @@ public class BirdChangeCustom : MonoBehaviour
                 else if (m.HasProperty(ColorID))
                     original = m.GetColor(ColorID);
                 else
-                    continue; // no color to fade
+                    continue;
 
-                // Set faded alpha
                 Color faded = original;
                 faded.a = startAlpha;
 
-                // Apply faded color to material
                 if (m.HasProperty(BaseColorID))
                     m.SetColor(BaseColorID, faded);
                 else
@@ -119,32 +102,21 @@ public class BirdChangeCustom : MonoBehaviour
         }
     }
 
-    // ------------------------------------------
-    // WATER EVENT — called when bottle is full
-    // ------------------------------------------
-    private void OnWaterComplete()
+    void OnWaterComplete()
     {
         canFade = true;
     }
 
-    // ------------------------------------------
-    // TRIGGER — start fade when hitting the lid
-    // ------------------------------------------
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (!canFade || hasFaded) return;
+        if (!other.CompareTag(changeColorTag)) return;
 
-        if (other.CompareTag(changeColorTag))
-        {
-            hasFaded = true;
-            StartCoroutine(FadeToFullColor());
-        }
+        hasFaded = true;
+        StartCoroutine(FadeToFullColor());
     }
 
-    // ------------------------------------------
-    // FADING ROUTINE
-    // ------------------------------------------
-    private IEnumerator FadeToFullColor()
+    IEnumerator FadeToFullColor()
     {
         float t = 0f;
 
@@ -159,19 +131,18 @@ public class BirdChangeCustom : MonoBehaviour
 
                 if (info.mat.HasProperty(BaseColorID))
                     info.mat.SetColor(BaseColorID, c);
-                else if (info.mat.HasProperty(ColorID))
+                else
                     info.mat.SetColor(ColorID, c);
             }
 
             yield return null;
         }
 
-        // guarantee final exact color
         foreach (var info in mats)
         {
             if (info.mat.HasProperty(BaseColorID))
                 info.mat.SetColor(BaseColorID, info.originalColor);
-            else if (info.mat.HasProperty(ColorID))
+            else
                 info.mat.SetColor(ColorID, info.originalColor);
         }
     }

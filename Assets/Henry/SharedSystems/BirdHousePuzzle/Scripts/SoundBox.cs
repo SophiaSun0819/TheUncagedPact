@@ -19,6 +19,7 @@ public class SoundBox : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // Bird might be on a child collider, so use InParent
         var bird = other.GetComponentInParent<SoundBall>();
         if (bird == null) return;
 
@@ -41,9 +42,9 @@ public class SoundBox : MonoBehaviour
 
             OnCorrect?.Invoke();
 
-            // --- IMPORTANT PART: detach from hand before snapping ---
+            // --- Detach from hand before snapping ---
             Transform t = bird.transform;
-            t.SetParent(null, true);   // drop any grab parent (hand/controller)
+            t.SetParent(null, true);   // drop any grab parent (controller/hand)
 
             // Snap bird to its perch in world space
             if (snapPoint != null)
@@ -52,7 +53,7 @@ public class SoundBox : MonoBehaviour
                 t.rotation = snapPoint.rotation;
             }
 
-            // 🔒 Lock the bird so it can't be moved or grabbed again
+            // Lock the bird so it can't be moved or grabbed again
             bird.Lock();
         }
         else
@@ -63,7 +64,7 @@ public class SoundBox : MonoBehaviour
             if (!snapOnlyIfCorrect && snapPoint != null)
             {
                 Transform t = bird.transform;
-                t.SetParent(null, true);         // also detach if you want even on wrong
+                t.SetParent(null, true);
                 t.position = snapPoint.position;
                 t.rotation = snapPoint.rotation;
             }

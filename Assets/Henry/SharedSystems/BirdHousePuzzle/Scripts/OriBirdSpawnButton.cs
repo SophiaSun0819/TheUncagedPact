@@ -3,61 +3,45 @@ using UnityEngine;
 public class OriBirdSpawnButton : MonoBehaviour
 {
     [Header("Bird Setup")]
-    public GameObject birdPrefab;            // Bird prefab (from Project)
-    public Transform spawnPoint;             // Where the bird appears
+    public GameObject birdPrefab;
+    public Transform spawnPoint;
 
     [Header("Water System")]
-    public ShaderWaterLevelController waterLevelController;  
-    // Drag your pitcher/water object with ShaderWaterLevelController here
+    public ShaderWaterLevelController waterLevelController;
 
-    [Header("Delivery Target")]
-    public Transform playerTarget;           // e.g. BirdDeliveryPoint child of the camera
+    [Header("Delivery Target (HelpBird)")]
+    public Transform playerTarget;
 
-    [Header("Spawn Options")]
-    public bool canSpawnAgain = false;       // Allow multiple birds or not
+    [Header("Options")]
+    public bool canSpawnAgain = false;
 
-    private GameObject _spawnedBird;
+    GameObject _spawnedBird;
 
     public void SpawnBird()
     {
-        // If we don't want multiple birds, stop if one already exists
         if (!canSpawnAgain && _spawnedBird != null)
             return;
 
         if (!birdPrefab || !spawnPoint)
         {
-            Debug.LogWarning("[OriBirdSpawnButton] Missing birdPrefab or spawnPoint!", this);
+            Debug.LogWarning("[OriBirdSpawnButton] Missing prefab or spawnPoint!", this);
             return;
         }
 
-        // Spawn the bird
-        _spawnedBird = Instantiate(
-            birdPrefab,
-            spawnPoint.position,
-            spawnPoint.rotation
-        );
+        _spawnedBird = Instantiate(birdPrefab, spawnPoint.position, spawnPoint.rotation);
+        Debug.Log("[OriBirdSpawnButton] Bird spawned!", this);
 
-        Debug.Log("[OriBirdSpawnButton] Origami bird spawned.", this);
-
-        // Hook up BirdChangeColor -> water controller
+        // Give bird water controller
         var colorLogic = _spawnedBird.GetComponentInChildren<BirdChangeCustom>();
         if (colorLogic != null)
         {
             if (waterLevelController != null)
-            {
                 colorLogic.Init(waterLevelController);
-            }
             else
-            {
-                Debug.LogWarning("[OriBirdSpawnButton] No waterLevelController assigned; BirdChangeColor won't react to water.", this);
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[OriBirdSpawnButton] BirdChangeColor not found on spawned bird.", this);
+                Debug.LogWarning("[OriBirdSpawnButton] No water controller assigned.");
         }
 
-        // Inject player target into HelpBirdCourier (for delivery later)
+        // Inject delivery target (if the bird has courier script)
         var courier = _spawnedBird.GetComponent<BirdPickUp>();
         if (courier != null)
         {
@@ -67,12 +51,8 @@ public class OriBirdSpawnButton : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("[OriBirdSpawnButton] No playerTarget assigned; courier won't know where to deliver.", this);
+                Debug.LogWarning("[OriBirdSpawnButton] No playerTarget assigned.");
             }
-        }
-        else
-        {
-            Debug.Log("[OriBirdSpawnButton] No HelpBirdCourier on spawned bird (that's fine if you haven't added it yet).", this);
         }
     }
 }

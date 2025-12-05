@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Events;   // <- this fixes the UnityEvent error
+using UnityEngine.Events;
 
 public class PhysicalButton : MonoBehaviour
 {
@@ -9,7 +9,6 @@ public class PhysicalButton : MonoBehaviour
     [Header("Events")]
     public UnityEvent OnPressed;
 
-    // Call this when the button is *actually* pressed
     public void Press()
     {
         if (clickSound != null)
