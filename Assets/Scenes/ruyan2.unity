@@ -21252,6 +21252,7 @@ MonoBehaviour:
   targetLevel: 0.71
   requiredEyesToFill: 3
   raiseDuration: 1
+  splashAudio: {fileID: 0}
   onWaterBottleComplete:
     m_PersistentCalls:
       m_Calls: []
@@ -22402,7 +22403,7 @@ MonoBehaviour:
   drawer: {fileID: 5948363225061566535}
   WINDOW_FRAME: WINDOW_FRAME_EffectMesh
   WALL_ART: WALL_ART_EffectMesh
-  TABLE: TABLE_EffectMesh
+  TABLE: BED_EffectMesh
   DOOR: DOOR_FRAME
   WALL: WALL_FRME
   windowOffset: 0.3
