@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Meta.XR.MRUtilityKit;
 
 public class MirrorSpawner : MonoBehaviour
 {
@@ -10,6 +11,14 @@ public class MirrorSpawner : MonoBehaviour
     public float offsetFromWall = 0.05f;
     public float maxRaycastDistance = 10f;
     public float spawnDelay = 3f;
+
+    [Header("Height Settings")]
+    [Tooltip("Mirror spawn height (meters from floor)")]
+    public float spawnHeight = 1.5f;
+    [Tooltip("Use player's eye height instead of fixed height")]
+    public bool usePlayerEyeHeight = false;
+    [Tooltip("Offset from player eye height (if enabled)")]
+    public float eyeHeightOffset = 0f;
 
     [Header("Filter Settings")]
     [Tooltip("Ignore objects with these names when raycasting")]
@@ -127,18 +136,88 @@ public class MirrorSpawner : MonoBehaviour
     {
         string objName = obj.name.ToLower();
 
-        bool isWall = objName.Contains("wall") ||
-                      objName.Contains("plane") ||
-                      objName.Contains("anchor") ||
-                      objName.Contains("mesh") ||
-                      objName.Contains("effect");
+        // 檢查 1: 名稱必須包含 "wall" 和 "mesh" 或 "effect"
+        bool hasWallInName = objName.Contains("wall");
+        bool hasMeshKeyword = objName.Contains("mesh") || objName.Contains("effect");
 
-        return isWall;
+        if (!hasWallInName || !hasMeshKeyword)
+        {
+            if (debugMode)
+            {
+                Debug.Log($"[MirrorSpawner] {obj.name} - Name check failed");
+            }
+            return false;
+        }
+
+        // 檢查 2: 嘗試獲取 MRUKAnchor 組件
+        MRUKAnchor anchor = obj.GetComponent<MRUKAnchor>();
+
+        // 如果當前物體沒有，嘗試在父物體找
+        if (anchor == null)
+        {
+            anchor = obj.GetComponentInParent<MRUKAnchor>();
+        }
+
+        if (anchor != null)
+        {
+            // 檢查 Label 是否為 WALL_FACE
+            bool isWallFace = anchor.Label == MRUKAnchor.SceneLabels.WALL_FACE;
+
+            if (debugMode)
+            {
+                Debug.Log($"[MirrorSpawner] Checking {obj.name}:");
+                Debug.Log($"  - Has MRUKAnchor: v");
+                Debug.Log($"  - Label: {anchor.Label}");
+                Debug.Log($"  - Is WALL_FACE: {(isWallFace ? "v" : "x")}");
+            }
+
+            return isWallFace;
+        }
+        else
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning($"[MirrorSpawner] {obj.name} has 'wall' in name but no MRUKAnchor component");
+            }
+            return false;
+        }
     }
 
     private void SpawnMirror(Vector3 position, Vector3 normal)
     {
-        Vector3 spawnPosition = position + normal * offsetFromWall;
+        Vector3 spawnPosition;
+
+        // === 根據設定選擇高度計算方式 ===
+        if (usePlayerEyeHeight)
+        {
+            // 使用玩家當前眼睛高度
+            Transform playerCamera = Camera.main.transform;
+            if (playerCamera != null)
+            {
+                float playerHeight = playerCamera.position.y;
+                spawnPosition = new Vector3(position.x, playerHeight + eyeHeightOffset, position.z);
+
+                if (debugMode)
+                {
+                    Debug.Log($"[MirrorSpawner] Using player eye height: {playerHeight}m + offset: {eyeHeightOffset}m");
+                }
+            }
+            else
+            {
+                // 備用：使用固定高度
+                spawnPosition = new Vector3(position.x, spawnHeight, position.z);
+                Debug.LogWarning("[MirrorSpawner] Camera not found, using fixed height");
+            }
+        }
+        else
+        {
+            // 使用固定高度
+            spawnPosition = new Vector3(position.x, spawnHeight, position.z);
+        }
+
+        // 添加牆面偏移
+        spawnPosition += normal * offsetFromWall;
+
         Quaternion spawnRotation = Quaternion.LookRotation(-normal);
 
         spawnedMirror = Instantiate(mirrorPrefab, spawnPosition, spawnRotation);
@@ -148,7 +227,9 @@ public class MirrorSpawner : MonoBehaviour
         {
             Debug.Log("[MirrorSpawner] ========================================");
             Debug.Log("[MirrorSpawner] SUCCESS! Mirror spawned!");
-            Debug.Log($"[MirrorSpawner] Position: {spawnPosition}");
+            Debug.Log($"[MirrorSpawner] Original wall hit: {position}");
+            Debug.Log($"[MirrorSpawner] Final position: {spawnPosition}");
+            Debug.Log($"[MirrorSpawner] Height: {spawnPosition.y}m");
             Debug.Log($"[MirrorSpawner] Rotation: {spawnRotation.eulerAngles}");
             Debug.Log("[MirrorSpawner] ========================================");
         }
