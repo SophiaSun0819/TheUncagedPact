@@ -20,14 +20,17 @@ public class ShaderWaterLevelController : MonoBehaviour
     [Header("Animation")]
     public float raiseDuration = 1.0f;
 
+    [Header("Audio")]
+    public AudioSource splashAudio;
+
     private Material waterMaterial;
     private int shaderPropertyID;
     private int currentEyeCount = 0;
-
-     public UnityEvent onWaterBottleComplete;
+    private bool taskCompleted;
+    public UnityEvent onWaterBottleComplete;
     // Allow birds to check if water was already completed
     public bool IsComplete => taskCompleted;
-   
+
 
 
     void Start()
@@ -88,7 +91,7 @@ public class ShaderWaterLevelController : MonoBehaviour
         }
     }
 
-   void CheckTaskCompletion()
+    void CheckTaskCompletion()
     {
         if (!taskCompleted && currentEyeCount >= requiredEyesToFill)
         {
@@ -103,14 +106,14 @@ public class ShaderWaterLevelController : MonoBehaviour
         float elapsedTime = 0;
         float startLevel = waterMaterial.GetFloat(shaderPropertyID);
 
-        while (elapsed < raiseDuration)
+        while (elapsedTime < raiseDuration)
         {
             float t = elapsedTime / raiseDuration;
             float currentLevel = Mathf.Lerp(startLevel, newTargetLevel, t);
             waterMaterial.SetFloat(shaderPropertyID, currentLevel);
 
             elapsedTime += Time.deltaTime;
-            yield return null; 
+            yield return null;
         }
 
         waterMaterial.SetFloat(shaderPropertyID, newTargetLevel);
