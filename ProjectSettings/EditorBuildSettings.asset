@@ -11,15 +11,18 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/VR.unity
     guid: b3982c70714ef40a8b7e3dae7e5646a8
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/ruyan.unity
     guid: f6e4eef7ca0f9c047a93dde9a18d4419
   - enabled: 0
     path: Assets/Scenes/henry.unity
     guid: bbd4fe9af917a224cbd7be1cc53c1b8b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/game.unity
     guid: 0c6fbd0fa2c7e9148bb86b9e0c79eb98
+  - enabled: 0
+    path: Assets/Scenes/WebCamQRcode.unity
+    guid: 79b9c333a1ea87a418139082bec8431a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: b38394fd060d4423789385fc9d50ebf8, type: 2}
