@@ -12832,7 +12832,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4881723578219816701, guid: 568e04f4b8e682545b685069a4b3cf86, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5516654852246362174, guid: 568e04f4b8e682545b685069a4b3cf86, type: 3}
       propertyPath: m_IsActive
@@ -16209,7 +16209,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   windowPrefab: {fileID: 1201116671}
   waterBottle: {fileID: 404713766}
-  soundPuzzle: {fileID: 6496476665791415014}
+  soundPuzzle: {fileID: 1713453969}
   drawer: {fileID: 658099165}
   WINDOW_FRAME: WINDOW_FRAME_EffectMesh
   WALL_ART: WALL_ART_EffectMesh
@@ -16234,6 +16234,38 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1713453969
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1713453970}
+  m_Layer: 0
+  m_Name: soundPuzzleParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1713453970
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713453969}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.133, y: 0.609, z: -0.743}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 156175194108890935}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1730465079
@@ -21309,9 +21341,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6496476665791415014}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.457, y: 0.609, z: -1.242}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.62, y: 0.2, z: -2.4950001}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7592790164776963512}
@@ -21326,7 +21358,7 @@ Transform:
   - {fileID: 304298978077566759}
   - {fileID: 3990362331926660887}
   - {fileID: 3432815373838784776}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1713453970}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &166087650712993984
 GameObject:
@@ -32324,7 +32356,7 @@ SceneRoots:
   - {fileID: 1177653999}
   - {fileID: 1324150582}
   - {fileID: 1381257502}
-  - {fileID: 156175194108890935}
+  - {fileID: 1713453970}
   - {fileID: 1128408235}
   - {fileID: 658099166}
   - {fileID: 1700980114}

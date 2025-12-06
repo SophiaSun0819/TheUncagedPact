@@ -21,8 +21,6 @@ public class MultipleQRCodes : MonoBehaviour
     public TextMeshProUGUI debugText;
     public TextMeshProUGUI debugText2;
     public GameObject object1;
-
-    public event Action QRCodeComplete; //qrcode Puzzle complete
     public void OntrackableAdded(MRUKTrackable trackable){
        
         
@@ -32,23 +30,26 @@ public class MultipleQRCodes : MonoBehaviour
             // when recognize qrcode1 payload
             string payload = trackable.MarkerPayloadString;
             debugText.text = payload;
-            if (string.Equals(
-        payload?.Replace(" ", ""), 
-        payLoad1?.Replace(" ", ""), 
-        StringComparison.OrdinalIgnoreCase))
-            {
-                var trackOBJInstance = Instantiate(object1, trackable.transform);
+        //     if (string.Equals(
+        // payload?.Replace(" ", ""), 
+        // payLoad1?.Replace(" ", ""), 
+        // StringComparison.OrdinalIgnoreCase))
+        //     {
+        //         var trackOBJInstance = Instantiate(object1, trackable.transform);
+        //         var trackBoundsInstance = Instantiate(trackedBoundsPrefab, trackOBJInstance.transform);
+        //          var boundsAreaRect = trackable.PlaneRect.Value;
+        //     trackBoundsInstance.transform.localScale = new Vector3(boundsAreaRect.width, boundsAreaRect.height, 0.01f);
+        //     trackBoundsInstance.transform.localPosition = new Vector3(boundsAreaRect.center.x, boundsAreaRect.center.y, 0.01f);
+        //     }
+        //     else
+        //     {
+        //         debugText2.text = "different";
+        //     }
+            var trackOBJInstance = Instantiate(object1, trackable.transform);
                 var trackBoundsInstance = Instantiate(trackedBoundsPrefab, trackOBJInstance.transform);
                  var boundsAreaRect = trackable.PlaneRect.Value;
             trackBoundsInstance.transform.localScale = new Vector3(boundsAreaRect.width, boundsAreaRect.height, 0.01f);
             trackBoundsInstance.transform.localPosition = new Vector3(boundsAreaRect.center.x, boundsAreaRect.center.y, 0.01f);
-            QRCodeComplete?.Invoke();
-            }
-            else
-            {
-                debugText2.text = "different";
-            }
-            
            
         }
 

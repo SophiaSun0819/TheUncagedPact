@@ -19585,8 +19585,8 @@ MonoBehaviour:
   windowOffset: 0.3
   soundPuzzleOffset: 1
   drawerOffset: 1
-  spawnBirdHouseOnTable: 0
-  drawerNearTable: 0
+  spawnBirdHouseOnTable: 1
+  drawerNearTable: 1
 --- !u!4 &824950630
 Transform:
   m_ObjectHideFlags: 0
@@ -33320,6 +33320,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2048832611}
     - target: {fileID: 8510710444560913356, guid: 426d5d57c4b65c24abc7177eda20731d, type: 3}
+      propertyPath: correctPsw
+      value: 6307
+      objectReference: {fileID: 0}
+    - target: {fileID: 8510710444560913356, guid: 426d5d57c4b65c24abc7177eda20731d, type: 3}
       propertyPath: 'pswTexts.Array.data[0]'
       value: 
       objectReference: {fileID: 2048832615}
@@ -35141,7 +35145,6 @@ MonoBehaviour:
   targetLevel: 0.71
   requiredEyesToFill: 3
   raiseDuration: 1
-  splashAudio: {fileID: 0}
   onWaterBottleComplete:
     m_PersistentCalls:
       m_Calls: []

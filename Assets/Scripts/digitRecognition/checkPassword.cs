@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 
@@ -9,7 +8,6 @@ public class checkPassword : MonoBehaviour
     public TextMeshPro pswResult; // correct or incorrect
     public passthroughCropCamera sender; // send the digit psw
     private int writeIndex;
-    public static event Action finalPuzzleComplete;
 
     void OnEnable()
     {
@@ -54,7 +52,6 @@ public class checkPassword : MonoBehaviour
         if (inputPsw == correctPsw)
         {
             pswResult.text = "correct";
-            finalPuzzleComplete?.Invoke();
         }
         else
         {
