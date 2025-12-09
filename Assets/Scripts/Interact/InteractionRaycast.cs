@@ -3,8 +3,12 @@ using UnityEngine;
 public class InteractionRaycast : MonoBehaviour
 {
     [Header("射線設定")]
-    [Tooltip("射線起點（留空會自動尋找控制器）")]
+    [Tooltip("射線起點")]
     [SerializeField] private Transform rayOrigin;
+
+    [Header("相機設定")]
+    [Tooltip("OVRCameraRig 引用")]
+    [SerializeField] private OVRCameraRig cameraRig;
 
     [Tooltip("射線最大距離")]
     [SerializeField] private float rayDistance = 3f;
@@ -29,13 +33,57 @@ public class InteractionRaycast : MonoBehaviour
 
     // 自動找到的控制器Transform
     private Transform autoRayOrigin;
+    private Transform cameraTransform;
 
-    void Start()
+    private void Start()
     {
+        InitializeCamera();
         // 如果沒有手動設定Ray Origin，自動尋找
         if (rayOrigin == null)
         {
             FindControllerTransform();
+        }
+    }
+
+    private void Update()
+    {
+        CheckForInteractable();
+        HandleInteraction();
+        UpdateHintTextRotation();
+    }
+
+    // <summary>
+    /// 初始化相機引用（雙重保險）
+    /// </summary>
+    private void InitializeCamera()
+    {
+        // 方法 1: 從手動指定的 CameraRig 獲取
+        if (cameraRig != null && cameraRig.centerEyeAnchor != null)
+        {
+            cameraTransform = cameraRig.centerEyeAnchor;
+            if (debugMode)
+            {
+                Debug.Log("[InteractionRaycast] Using CameraRig.centerEyeAnchor");
+            }
+        }
+
+        // 方法 2: 使用 Camera.main 作為備用
+        if (cameraTransform == null)
+        {
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                cameraTransform = mainCam.transform;
+                if (debugMode)
+                {
+                    Debug.Log("[InteractionRaycast] Using Camera.main");
+                }
+            }
+        }
+
+        if (cameraTransform == null)
+        {
+            Debug.LogError("[InteractionRaycast] Failed to find camera!");
         }
     }
 
@@ -87,12 +135,6 @@ public class InteractionRaycast : MonoBehaviour
                 Debug.LogWarning("[InteractionRaycast] Using Main Camera as fallback");
             }
         }
-    }
-
-    void Update()
-    {
-        CheckForInteractable();
-        HandleInteraction();
     }
 
     /// <summary>
@@ -240,6 +282,30 @@ public class InteractionRaycast : MonoBehaviour
             }
 
             TriggerInteraction(currentObject);
+        }
+    }
+
+    /// <summary>
+    /// 更新 HintText 旋轉，使其面向玩家 - 新增功能
+    /// </summary>
+    private void UpdateHintTextRotation()
+    {
+        // 如果沒有顯示中的 HintText，或者沒有相機引用，直接返回
+        if (currentHintText == null || cameraTransform == null)
+            return;
+
+        // 讓 HintText 面向相機
+        Vector3 directionToCamera = cameraTransform.position - currentHintText.transform.position;
+
+        // 只旋轉 Y 軸（保持文字直立，不傾斜）
+        directionToCamera.y = 0;
+
+        if (directionToCamera != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(directionToCamera);
+            // 加上 180 度 Y 軸旋轉，讓文字正面朝向玩家
+            targetRotation *= Quaternion.Euler(0, 180, 0);
+            currentHintText.transform.rotation = targetRotation;
         }
     }
 
