@@ -247,8 +247,8 @@ public class GameManager : MonoSingleton<GameManager>
             try
             {
                 UIPromptManager.Instance.ShowSuccess(
-                    "PASSWORD UNLOCKED",
-                    "The digital lock clicks open...\nSecrets once hidden are now revealed.\n\nKnowledge is the key to freedom",
+                    "UNLOCKED",
+                    "The digital lock clicks open...",
                     "A new path awaits you"
                 );
 
