@@ -32,6 +32,13 @@ public class GameManager : MonoSingleton<GameManager>
     /// </summary>
     public static event Action OnLevel1Complete;
 
+    /// <summary>
+    /// Action triggered when password puzzle is completed
+    /// 密碼謎題完成事件 - 其他腳本可以訂閱此事件
+    /// Usage: GameManager.OnPasswordPuzzleComplete += YourMethod;
+    /// </summary>
+    public static event Action OnPasswordPuzzleComplete;
+
     protected override void Awake()
     {
         base.Awake();
@@ -200,6 +207,65 @@ public class GameManager : MonoSingleton<GameManager>
         }
 
         Invoke(nameof(TriggerNextLevel), delayBeforeNextLevel);
+    }
+
+    /// <summary>
+    /// 密碼謎題完成 - 由 checkPassword 腳本調用
+    /// Called by checkPassword script when password is correct
+    /// </summary>
+    public void OnPasswordComplete()
+    {
+        if (debugMode)
+        {
+            Debug.Log("[GameManager] ========================================");
+            Debug.Log("[GameManager] 密碼謎題完成！Password Puzzle Complete!");
+
+            if (OnPasswordPuzzleComplete == null)
+            {
+                Debug.LogWarning("[GameManager] WARNING: No listeners subscribed to OnPasswordPuzzleComplete");
+            }
+            else
+            {
+                Debug.Log($"[GameManager] Broadcasting to {OnPasswordPuzzleComplete.GetInvocationList().Length} listener(s)");
+            }
+
+            Debug.Log("[GameManager] ========================================");
+        }
+
+        ShowPasswordCompleteMessage();
+        // 觸發密碼完成事件
+        OnPasswordPuzzleComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// 在鏡子 UI 顯示密碼完成訊息
+    /// </summary>
+    private void ShowPasswordCompleteMessage()
+    {
+        if (UIPromptManager.Instance != null)
+        {
+            try
+            {
+                UIPromptManager.Instance.ShowSuccess(
+                    "PASSWORD UNLOCKED",
+                    "The digital lock clicks open...\nSecrets once hidden are now revealed.\n\nKnowledge is the key to freedom",
+                    "A new path awaits you"
+                );
+
+                if (debugMode)
+                {
+                    Debug.Log("[GameManager] 鏡子 UI 已顯示密碼完成訊息");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[GameManager] 顯示密碼完成訊息失敗: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[GameManager] UIPromptManager.Instance is NULL!");
+        }
     }
 
     /// <summary>
