@@ -742,7 +742,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1939697954274079992, guid: 981c72c05b8f3474cae160115a8f3854, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.232
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 1939697954274079992, guid: 981c72c05b8f3474cae160115a8f3854, type: 3}
       propertyPath: m_LocalPosition.z
@@ -7865,7 +7865,7 @@ Transform:
   m_GameObject: {fileID: 658099165}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.19936797, z: 0, w: 0.97992474}
-  m_LocalPosition: {x: 0.12729423, y: 0.8957648, z: -0.5419587}
+  m_LocalPosition: {x: 0.12729423, y: 100, z: -0.5419587}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -12084,7 +12084,7 @@ Transform:
   m_GameObject: {fileID: 1171019210}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.114, y: 0.609, z: -1.082}
+  m_LocalPosition: {x: -0.114, y: 100, z: -1.082}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -12319,7 +12319,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 208830407917905679, guid: 207c4dc5fca1d4c4b9187e5d5cb634ca, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.439
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 208830407917905679, guid: 207c4dc5fca1d4c4b9187e5d5cb634ca, type: 3}
       propertyPath: m_LocalPosition.z
@@ -20716,7 +20716,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1597488869}
-  - component: {fileID: 1597488871}
   - component: {fileID: 1597488870}
   m_Layer: 0
   m_Name: WallColorChanger
@@ -20777,24 +20776,11 @@ MonoBehaviour:
     clueHint: 
     requiredColor: {r: 0, g: 0, b: 1, a: 1}
     isPainted: 0
-  interactionDistance: 0.5
   interactionCooldown: 1
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
   debugMode: 1
---- !u!114 &1597488871
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1597488868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75886d28fd4dc41acb21e8454d40a302, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1600706175
 GameObject:
   m_ObjectHideFlags: 0
@@ -29635,6 +29621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rayOrigin: {fileID: 456254920}
+  cameraRig: {fileID: 0}
   rayDistance: 3
   interactableLayer:
     serializedVersion: 2
@@ -33442,7 +33429,7 @@ Transform:
   m_GameObject: {fileID: 8424286476787436525}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.915, y: -0.15490243, z: -1.242}
+  m_LocalPosition: {x: -0.915, y: 100, z: -1.242}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -37440,7 +37427,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &4701851640452562061
 MeshRenderer:
   m_ObjectHideFlags: 0
