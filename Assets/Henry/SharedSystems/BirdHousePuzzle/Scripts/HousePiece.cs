@@ -3,11 +3,24 @@ using UnityEngine;
 public class HousePiece : MonoBehaviour
 {
     [Header("ID")]
-    public int pieceId = 0;                  // 1 = base, 2 = pole, 3 = house etc.
+    public int pieceId = 0;
 
-    [HideInInspector] public bool isLocked;  // set by controller
+    [HideInInspector] public bool isLocked;
 
     [Header("Disable when locked")]
-    // Drag XR Grab Interactable, GrabInteractable, Grabbable, etc. here
     public Behaviour[] disableOnLock;
+
+    private bool _pickedVOFired = false;
+
+    // Hook this from your XR Grab Interactable / Grabbable OnSelectEntered event
+    public void OnPickedUp()
+    {
+        if (_pickedVOFired) return;
+        _pickedVOFired = true;
+
+        if (SoundPuzzleVOController.Instance != null)
+        {
+            SoundPuzzleVOController.Instance.CuePickUpFirstPiece();
+        }
+    }
 }

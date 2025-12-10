@@ -6,19 +6,30 @@ public class BirdChangeCustom : MonoBehaviour
 {
     [Header("Fading Settings")]
     [Range(0f, 1f)]
-    public float startAlpha = 0.1f;         // transparency at spawn
-    public float fadeDuration = 0.5f;       // fade time
+    public float startAlpha = 0.1f;        // transparency at spawn
+    public float fadeDuration = 0.5f;      // fade time
 
-    [Header("Optional: assign bird renderers manually")]
+    [Header("Renderer Setup (auto-filled if empty)")]
     public Renderer[] renderers;
 
-    [Header("Trigger Tag for Bottle Lid")]
+    [Header("Trigger Tag for Bottle Lip")]
     public string changeColorTag = "ChangeColorTrigger";
 
-    // internal state
+    [Header("Water Logic")]
+    public ShaderWaterLevelController waterLevelController;
+
+    // assigned by spawner
+    [HideInInspector] 
+    public GameObject changeColorTrigger;
+
+    // fading control
     private bool canFade = false;
     private bool hasFaded = false;
 
+    // too-low VO limiter
+    private bool playedTooLowOnce = false;
+
+    // material cache
     private struct MatInfo
     {
         public Material mat;
@@ -28,55 +39,56 @@ public class BirdChangeCustom : MonoBehaviour
 
     private List<MatInfo> mats = new List<MatInfo>();
 
-    // common shader properties
+    // shader color properties
     private static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorID     = Shader.PropertyToID("_Color");
 
-    // ------------------------------------------
-    // INIT — called by the spawner after Instantiate()
-    // ------------------------------------------
-    private ShaderWaterLevelController waterController;
-
+    // ------------------------------------------------------------------
+    // INIT — called by spawn button
+    // ------------------------------------------------------------------
     public void Init(ShaderWaterLevelController controller)
     {
-        waterController = controller;
+        waterLevelController = controller;
 
-        if (waterController != null)
+        if (controller != null)
         {
-            waterController.onWaterBottleComplete.AddListener(OnWaterComplete);
+            controller.onWaterBottleComplete.AddListener(OnWaterComplete);
+
+            // water already complete when bird spawns
+            if (controller.waterBottleComplete)
+                OnWaterComplete();
         }
         else
         {
-            Debug.LogWarning("[BirdChangeColor] Init() was given a null controller!");
+            Debug.LogWarning("[BirdChangeCustom] Init() called with NULL water controller.");
         }
     }
 
-    // ------------------------------------------
-    void Awake()
+    private void Awake()
     {
-        // Auto-grab all renderers in children (covers 3-part bird)
+        // Auto-fill renderers
         if (renderers == null || renderers.Length == 0)
         {
             renderers = GetComponentsInChildren<Renderer>(includeInactive: true);
         }
     }
 
-    void Start()
+    private void Start()
     {
         SetupFadedMaterials();
     }
 
     private void OnDestroy()
     {
-        if (waterController != null)
+        if (waterLevelController != null)
         {
-            waterController.onWaterBottleComplete.RemoveListener(OnWaterComplete);
+            waterLevelController.onWaterBottleComplete.RemoveListener(OnWaterComplete);
         }
     }
 
-    // ------------------------------------------
-    // SETUP — prepares all materials for fading
-    // ------------------------------------------
+    // ------------------------------------------------------------------
+    // PREPARE MATERIALS (set bird faded at start)
+    // ------------------------------------------------------------------
     private void SetupFadedMaterials()
     {
         mats.Clear();
@@ -85,11 +97,10 @@ public class BirdChangeCustom : MonoBehaviour
         {
             if (!r) continue;
 
-            foreach (var m in r.materials)
+            foreach (var m in r.materials)   // uses duplicated instance; safe to edit
             {
                 if (!m) continue;
 
-                // Determine which color property to use
                 Color original;
 
                 if (m.HasProperty(BaseColorID))
@@ -97,17 +108,20 @@ public class BirdChangeCustom : MonoBehaviour
                 else if (m.HasProperty(ColorID))
                     original = m.GetColor(ColorID);
                 else
-                    continue; // no color to fade
+                    continue;
 
-                // Set faded alpha
+                // faded version of the color
                 Color faded = original;
                 faded.a = startAlpha;
 
-                // Apply faded color to material
+                // apply faded material
                 if (m.HasProperty(BaseColorID))
                     m.SetColor(BaseColorID, faded);
                 else
                     m.SetColor(ColorID, faded);
+
+                // force transparent mode
+                SetMaterialToTransparent(m, true);
 
                 mats.Add(new MatInfo
                 {
@@ -119,31 +133,41 @@ public class BirdChangeCustom : MonoBehaviour
         }
     }
 
-    // ------------------------------------------
-    // WATER EVENT — called when bottle is full
-    // ------------------------------------------
+    // ------------------------------------------------------------------
+    // WATER LEVEL FINISHED → allow fade
+    // ------------------------------------------------------------------
     private void OnWaterComplete()
     {
         canFade = true;
+        playedTooLowOnce = false;
     }
 
-    // ------------------------------------------
-    // TRIGGER — start fade when hitting the lid
-    // ------------------------------------------
+    // ------------------------------------------------------------------
+    // TRIGGER → Fade when bird touches pitcher rim
+    // ------------------------------------------------------------------
     private void OnTriggerEnter(Collider other)
     {
-        if (!canFade || hasFaded) return;
-
-        if (other.CompareTag(changeColorTag))
+        if (changeColorTrigger != null && other.gameObject == changeColorTrigger)
         {
+            // too-low VO logic
+            if (!playedTooLowOnce && waterLevelController != null && !canFade)
+            {
+                waterLevelController.TryPlayTooLowVO();
+                playedTooLowOnce = true;
+            }
+
+            // cannot fade until water system completes
+            if (!canFade || hasFaded)
+                return;
+
             hasFaded = true;
             StartCoroutine(FadeToFullColor());
         }
     }
 
-    // ------------------------------------------
-    // FADING ROUTINE
-    // ------------------------------------------
+    // ------------------------------------------------------------------
+    // FADING ROUTINE → Transition from faded → fully opaque
+    // ------------------------------------------------------------------
     private IEnumerator FadeToFullColor()
     {
         float t = 0f;
@@ -161,18 +185,48 @@ public class BirdChangeCustom : MonoBehaviour
                     info.mat.SetColor(BaseColorID, c);
                 else if (info.mat.HasProperty(ColorID))
                     info.mat.SetColor(ColorID, c);
+
+                // adjust transparency as alpha changes
+                bool stillTransparent = c.a < 1f;
+                SetMaterialToTransparent(info.mat, stillTransparent);
             }
 
             yield return null;
         }
 
-        // guarantee final exact color
+        // ensure final colors + full opacity set
         foreach (var info in mats)
         {
             if (info.mat.HasProperty(BaseColorID))
                 info.mat.SetColor(BaseColorID, info.originalColor);
-            else if (info.mat.HasProperty(ColorID))
+            else
                 info.mat.SetColor(ColorID, info.originalColor);
+
+            // set opaque mode
+            SetMaterialToTransparent(info.mat, false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Switch URP Lit material between transparent and opaque
+    // ------------------------------------------------------------------
+    private void SetMaterialToTransparent(Material mat, bool transparent)
+    {
+        if (transparent)
+        {
+            mat.SetFloat("_Surface", 1); // Transparent
+            mat.SetFloat("_ZWrite", 0);
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        }
+        else
+        {
+            mat.SetFloat("_Surface", 0); // Opaque
+            mat.SetFloat("_ZWrite", 1);
+            mat.DisableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
         }
     }
 }

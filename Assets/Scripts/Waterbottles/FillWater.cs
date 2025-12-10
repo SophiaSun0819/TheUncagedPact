@@ -1,110 +1,171 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(Collider))]
 public class ShaderWaterLevelController : MonoBehaviour
 {
-    [Header("ShaderSettings")]
-    // 在 Inspector 中拖拽 Water 模型的 MeshRenderer 组件到此槽位
-    public MeshRenderer waterMeshRenderer;
+    [Header("== EYEBALL DETECTION ==")]
+    public string eyeballTag = "Eye";
 
-    // Shader 中控制水位的 Float 属性的引用名称 (例如: "_Fill")
-    // 请确保名称与 Shader Graph 中的属性名称一致！
-    public string shaderWaterLevelPropertyName = "_Fill";
+    [Header("== WATER VISUAL ==")]
+    public Renderer waterRenderer;
+    public string shaderFillProperty = "_FillAmount";
 
-    [Header("WaterLevel")]
-    [Tooltip("水体的起始水位值 (Shader 属性值)")]
-    public float initialLevel = 0.0f;
+    [Header("== FILL SETTINGS ==")]
+    [Range(0f, 1f)] public float currentFill01 = 0f;
+    [Range(0f, 1f)] public float fullFill01 = 1f;
+    [Range(0.01f, 0.5f)] public float fillPerEyeball = 0.1f;
 
-    [Tooltip("水体的目标水位值 (Shader 属性值)")]
-    public float targetLevel = 1.0f;
+    [Header("== AUDIO CLIPS (Drag these in) ==")]
+    public AudioClip sfxSplash;        // eyeball drop sound
+    public AudioClip voWaterRising;    // “Water is rising…” after first eyeball
+    public AudioClip voWaterStillLow;  // “Water is STILL too low…” after second eyeball
+    public AudioClip voWaterTooLow;    // played when bird approaches too early
+    public AudioClip voWaterReady;     // “This should be high enough!”
+    public AudioClip sfxWaterComplete; // Final completion SFX or VO
 
-    [Tooltip("需要多少个 Eye 对象才能达到目标水位")]
-    public int requiredEyesToFill = 3;
+    // separate sources so SFX can overlap but VO does not
+    private AudioSource sfxSource;
+    private AudioSource voSource;
 
-    [Header("Animation")]
-    [Tooltip("水位上升动画的持续时间")]
-    public float raiseDuration = 1.0f;
+    [Header("== EVENTS FOR OTHER SCRIPTS ==")]
+    public UnityEvent onWaterBottleComplete;    // triggers BirdChangeColor
+    public bool waterBottleComplete = false;    // read by BirdChangeColor
 
-    // 私有变量
-    private Material waterMaterial;
-    private int shaderPropertyID;
-    private int currentEyeCount = 0;
+    [Header("== Ready / Hint Thresholds ==")]
+    [Tooltip("After this %, bird should be able to drink. Fires once.")]
+    [Range(0f, 1f)]
+    public float readyThreshold = 0.7f;
 
-     public UnityEvent onWaterBottleComplete;
+    private bool readyVOFired = false;
+    private int eyeballCount = 0;
 
+    private Collider triggerCol;
 
-    void Start()
+    private void Awake()
     {
-        // 1. 获取 MeshRenderer 上的 Material 实例
-        if (waterMeshRenderer != null)
-        {
-            waterMaterial = waterMeshRenderer.material;
-            // 获取 Shader 属性的 ID (性能优化)
-            shaderPropertyID = Shader.PropertyToID(shaderWaterLevelPropertyName);
+        triggerCol = GetComponent<Collider>();
+        triggerCol.isTrigger = true;
 
-            // 2. 初始化水位到起始值
-            waterMaterial.SetFloat(shaderPropertyID, initialLevel);
-        }
-        else
+        // separate sources for SFX and VO
+        sfxSource = gameObject.AddComponent<AudioSource>();
+        voSource  = gameObject.AddComponent<AudioSource>();
+
+        sfxSource.playOnAwake = false;
+        voSource.playOnAwake = false;
+
+        ApplyFillToShader();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag(eyeballTag))
+            return;
+
+        eyeballCount++;
+
+        // Splash SFX
+        PlaySfx(sfxSplash);
+
+        if (waterBottleComplete) return;
+
+        // Increase water level
+        currentFill01 = Mathf.Clamp01(currentFill01 + fillPerEyeball);
+        ApplyFillToShader();
+
+        // FIRST EYEBALL → “Water is rising!”
+        if (eyeballCount == 1)
         {
-            Debug.LogError("Water MeshRenderer 槽位未设置! 无法控制水位 Shader。");
-            enabled = false;
+            PlayVoice(voWaterRising);
+        }
+        // SECOND EYEBALL → “Water is STILL too low!”
+        else if (eyeballCount == 2 && currentFill01 < readyThreshold)
+        {
+            PlayVoice(voWaterStillLow);
+        }
+
+        // Ready-to-drink threshold VO
+        if (!readyVOFired && currentFill01 >= readyThreshold)
+        {
+            readyVOFired = true;
+            PlayVoice(voWaterReady);
+        }
+
+        // FULL completion logic
+        if (!waterBottleComplete && currentFill01 >= fullFill01 - 0.0001f)
+        {
+            waterBottleComplete = true;
+
+            // Final SFX/VO
+            PlaySfx(sfxWaterComplete);
+
+            // Trigger event for bird
+            onWaterBottleComplete?.Invoke();
         }
     }
 
-    // 当其他 Collider 进入水瓶的主 Collider 区域时触发
-    void OnCollisionEnter(Collision collision)
+    // Called by the bird when approaching to check if water is still too low
+    public void TryPlayTooLowVO()
     {
-        // 检查碰撞到的物体是否是眼球，且未被计算过
-        // 假设眼球对象的 Tag 是 "Eye"
-        if (collision.gameObject.CompareTag("Eye"))
+        if (!waterBottleComplete && currentFill01 < readyThreshold)
         {
-            // 确保眼球有 Rigidbody，且没有被抓取 (需要根据您的抓取组件调整)
-            Rigidbody eyeRb = collision.gameObject.GetComponent<Rigidbody>();
-
-            // 假设我们通过禁用 Collider 来标记眼球已被“使用”
-            Collider eyeCollider = collision.collider;
-            if (eyeCollider != null && eyeCollider.enabled)
-            {
-                // 1. 禁用眼球的碰撞体和刚体，使其停止影响场景并防止重复计数
-                eyeCollider.enabled = false;
-                if (eyeRb != null) eyeRb.isKinematic = true;
-
-                // 2. 累加眼球计数
-                currentEyeCount++;
-                Debug.Log($"眼球掉入! 当前计数: {currentEyeCount} / {requiredEyesToFill}");
-
-                // 3. 计算新的目标水位
-                float progress = Mathf.Clamp01((float)currentEyeCount / requiredEyesToFill);
-                float newTargetLevel = Mathf.Lerp(initialLevel, targetLevel, progress);
-
-                // 4. 启动水位上涨动画
-                StartCoroutine(AnimateWaterLevel(newTargetLevel));
-            }
+            PlayVoice(voWaterTooLow);
         }
     }
 
-    // 平滑地改变 Shader 中的水位属性
-    IEnumerator AnimateWaterLevel(float newTargetLevel)
+    private void ApplyFillToShader()
     {
-        float elapsedTime = 0;
-        // 获取当前水位值作为起始值
-        float startLevel = waterMaterial.GetFloat(shaderPropertyID);
-
-        while (elapsedTime < raiseDuration)
+        if (waterRenderer == null)
         {
-            float t = elapsedTime / raiseDuration;
-            // 使用 Lerp 进行平滑插值，更新 Shader 属性
-            float currentLevel = Mathf.Lerp(startLevel, newTargetLevel, t);
-            waterMaterial.SetFloat(shaderPropertyID, currentLevel);
-
-            elapsedTime += Time.deltaTime;
-            yield return null; // 等待下一帧
+            Debug.LogWarning("[ShaderWaterLevelController] No waterRenderer assigned.", this);
+            return;
         }
 
-        // 确保最终值精确
-        waterMaterial.SetFloat(shaderPropertyID, newTargetLevel);
+        var mat = waterRenderer.material;
+        if (string.IsNullOrEmpty(shaderFillProperty))
+        {
+            Debug.LogError("[ShaderWaterLevelController] shaderFillProperty is empty.", this);
+            return;
+        }
+
+        if (!mat.HasProperty(shaderFillProperty))
+        {
+            Debug.LogError(
+                $"[ShaderWaterLevelController] Material '{mat.name}' does NOT have a float property '{shaderFillProperty}'. " +
+                $"Open your water material and check the actual property name.",
+                this
+            );
+            return;
+        }
+
+        mat.SetFloat(shaderFillProperty, currentFill01);
+    }
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (clip == null) return;
+        sfxSource.PlayOneShot(clip);
+    }
+
+    private void PlayVoice(AudioClip clip)
+    {
+        if (clip == null) return;
+
+        // stop any previous VO so they don’t overlap
+        if (voSource.isPlaying)
+            voSource.Stop();
+
+        voSource.clip = clip;
+        voSource.loop = false;
+        voSource.Play();
+    }
+
+    public void ResetWater()
+    {
+        eyeballCount = 0;
+        currentFill01 = 0f;
+        waterBottleComplete = false;
+        readyVOFired = false;
+        ApplyFillToShader();
     }
 }

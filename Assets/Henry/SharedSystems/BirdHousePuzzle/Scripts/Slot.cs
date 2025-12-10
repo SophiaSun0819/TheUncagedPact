@@ -3,8 +3,8 @@ using UnityEngine;
 public class Slot : MonoBehaviour
 {
     public int requiredPieceId = 0;
-    public Transform snapPoint;                 // child object, scale 1
-    public Puzzle4_HouseController controller;  // drag controller here
+    public Transform snapPoint;
+    public Puzzle4_HouseController controller;
 
     void OnTriggerEnter(Collider other)
     {
@@ -18,21 +18,15 @@ public class Slot : MonoBehaviour
 
     void Try(Collider other)
     {
-        // XR Grab often puts colliders on children
+        // Only react to house pieces
         var piece = other.GetComponentInParent<HousePiece>();
         if (!piece) return;
         if (piece.isLocked) return;
 
-        // 🔴 Don't snap while the piece is still grabbed.
-        // Most grab systems set isKinematic = true while held.
+        // Don't snap while still being grabbed
         var rb = piece.GetComponent<Rigidbody>();
-        if (rb && rb.isKinematic)
-        {
-            // still in the hand → wait until they let go
-            return;
-        }
+        if (rb && rb.isKinematic) return;
 
-        Debug.Log($"[Slot] {name} detected free piece {piece.name}");
         controller.TryPlacePiece(this, piece);
     }
 }

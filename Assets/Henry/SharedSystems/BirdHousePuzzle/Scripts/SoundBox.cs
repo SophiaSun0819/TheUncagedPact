@@ -7,27 +7,27 @@ public class SoundBox : MonoBehaviour
     public int correctSoundID = 0;
 
     [Header("Snapping")]
-    public Transform snapPoint;             // where to park the bird/ball
-    public bool snapOnlyIfCorrect = true;   // if false, snap anything, if true, only correct one
+    public Transform snapPoint;
+    public bool snapOnlyIfCorrect = true;
 
     [Header("Events")]
     public UnityEvent OnCorrect;
     public UnityEvent OnWrong;
 
-    // prevents double-count for this box
     bool _alreadySatisfied = false;
+
+    // this ensures BirdOnLedge VO only plays once globally
+    private static bool _birdOnLedgeVoPlayed = false;
 
     private void OnTriggerEnter(Collider other)
     {
-        var bird = other.GetComponentInParent<SoundBall>();
-        if (bird == null) return;
+        var ball = other.GetComponentInParent<SoundBall>();
+        if (ball == null) return;
+        if (ball.IsLocked) return;
 
-        // If this bird is already locked, ignore it
-        if (bird.IsLocked) return;
+        Debug.Log($"[SoundBox] {name} EXPECTS {correctSoundID}, GOT {ball.soundID} from {ball.name}");
 
-        Debug.Log($"[SoundBox] {name} EXPECTS {correctSoundID}, GOT {bird.soundID} from {bird.name}");
-
-        if (bird.soundID == correctSoundID)
+        if (ball.soundID == correctSoundID)
         {
             Debug.Log($"[SoundBox] CORRECT match in {name}");
 
@@ -41,31 +41,47 @@ public class SoundBox : MonoBehaviour
 
             OnCorrect?.Invoke();
 
-            // --- IMPORTANT PART: detach from hand before snapping ---
-            Transform t = bird.transform;
-            t.SetParent(null, true);   // drop any grab parent (hand/controller)
+            // 🔊 First correct bird placed → BirdOnLedge VO
+            if (!_birdOnLedgeVoPlayed && SoundPuzzleVOController.Instance != null)
+            {
+                _birdOnLedgeVoPlayed = true;
+                SoundPuzzleVOController.Instance.CueBirdOnLedge();
+            }
 
-            // Snap bird to its perch in world space
+            // detach from hand
+            Transform t = ball.transform;
+            t.SetParent(null, true);
+
+            // snap
             if (snapPoint != null)
             {
                 t.position = snapPoint.position;
                 t.rotation = snapPoint.rotation;
             }
 
-            // 🔒 Lock the bird so it can't be moved or grabbed again
-            bird.Lock();
+            // fix world scale
+            ball.ApplyOriginalScale();
+
+            // lock
+            ball.Lock();
         }
         else
         {
             Debug.Log($"[SoundBox] WRONG match in {name}");
             OnWrong?.Invoke();
 
+            if (SoundPuzzleVOController.Instance != null)
+            {
+                SoundPuzzleVOController.Instance.CueWrongSoundBall();
+            }
+
             if (!snapOnlyIfCorrect && snapPoint != null)
             {
-                Transform t = bird.transform;
-                t.SetParent(null, true);         // also detach if you want even on wrong
+                Transform t = ball.transform;
+                t.SetParent(null, true);
                 t.position = snapPoint.position;
                 t.rotation = snapPoint.rotation;
+                ball.ApplyOriginalScale();
             }
         }
     }

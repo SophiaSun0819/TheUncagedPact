@@ -2,26 +2,26 @@ using UnityEngine;
 
 public class PhysicalButtonZone : MonoBehaviour
 {
-    public PhysicalButton button;
-    public ZoneToggle toggle;       // add this
+    [Header("References")]
+    public PhysicalButton button;   // still here if you need it for other stuff
+    public ZoneToggle toggle;       // this will now point to your VFX object
 
-    bool _controllerInside = false;
+    [Header("Who can activate this zone")]
+    public string controllerTag = "Controller";
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        _controllerInside = true;
-        if (toggle) toggle.SetInside(true);   // add this
+        if (!other.CompareTag(controllerTag)) return;
+
+        if (toggle != null)
+            toggle.SetInside(true);   // VFX ON
     }
 
-    void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
-        _controllerInside = false;
-        if (toggle) toggle.SetInside(false);  // add this
-    }
+        if (!other.CompareTag(controllerTag)) return;
 
-    public void OnButtonInput()
-    {
-        if (_controllerInside)
-            button.Press();
+        if (toggle != null)
+            toggle.SetInside(false);  // VFX OFF
     }
 }
