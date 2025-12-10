@@ -46,7 +46,6 @@ public class EffectMeshWallInteraction : MonoBehaviour
     [SerializeField] private WallClue[] wallClues = new WallClue[4];
 
     [Header("互動設定")]
-    [SerializeField] private float interactionDistance = 0.5f; // 互動距離（米）
     [SerializeField] private float interactionCooldown = 1f;
     [SerializeField] private LayerMask wallLayerMask = -1;
 
@@ -54,6 +53,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
     [SerializeField] private bool debugMode = true;
 
     private Transform playerCamera;
+    private float interactionDistance = 3f; // 互動距離（米）
     private float lastInteractionTime = 0f;
     private MRUK mruk;
 
