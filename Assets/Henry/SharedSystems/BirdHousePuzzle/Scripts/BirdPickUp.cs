@@ -10,13 +10,16 @@ public class BirdPickUp : MonoBehaviour
     [Header("Flight Settings")]
     public float flySpeed       = 1.5f;
     public float turnSpeed      = 5f;
-    public float arriveDistance = 0.05f;
-    public float hoverDistance  = 0.6f;   // how far in front of player
-    public float hoverHeight    = 0.2f;   // how high above player
+
+    [Tooltip("How close the bird must get before switching to next state.")]
+    public float arriveDistance = 0.05f;     // ← EDIT THIS TO CONTROL STOP DISTANCE
+
+    public float hoverDistance  = 0.6f;      // how far in front of player
+    public float hoverHeight    = 0.2f;      // how high above player
 
     [Header("Hover Wobble")]
-    public float wobbleRadius    = 0.05f;  // how big the wobble is
-    public float wobbleFrequency = 2f;     // how fast it wobbles
+    public float wobbleRadius    = 0.05f;  
+    public float wobbleFrequency = 2f;     
 
     Vector3 _wobbleSideDir;
 
@@ -32,12 +35,16 @@ public class BirdPickUp : MonoBehaviour
     Vector3    _initialPos;
     Quaternion _initialRot;
 
+    BirdChangeCustom _colorLogic;   // ← reference to color script
+
     void Awake()
     {
         _rb  = GetComponent<Rigidbody>();
         _col = GetComponent<Collider>();
 
-        // random horizontal wobble direction per bird
+        _colorLogic = GetComponentInChildren<BirdChangeCustom>();
+
+        // random wobble direction
         Vector3 rnd = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f));
         _wobbleSideDir = rnd.sqrMagnitude > 0.0001f ? rnd.normalized : Vector3.right;
 
@@ -46,9 +53,9 @@ public class BirdPickUp : MonoBehaviour
         _initialRot = transform.rotation;
     }
 
-    /// <summary>
-    /// Called by NewPageSpawner when the page is spawned.
-    /// </summary>
+    // -------------------------------------------------------------------
+    // *** ONLY ALLOW DELIVERY IF BIRD IS FULLY COLORED ***
+    // -------------------------------------------------------------------
     public void StartDelivery(Transform pageTransform)
     {
         if (pageTransform == null)
@@ -57,6 +64,16 @@ public class BirdPickUp : MonoBehaviour
             return;
         }
 
+        // 🚫 BLOCK DELIVERY IF BIRD HASN'T DRUNK WATER YET
+        if (_colorLogic != null && !_colorLogic.IsFullyColored)
+        {
+            Debug.Log("[BirdPickUp] Bird not fully colored yet — blocking delivery.");
+            // (optional) trigger a VO here:
+            SoundPuzzleVOController.Instance?.CueAfterWaterHomeHint();
+            return;
+        }
+
+        // ✔ Bird is fully colored — allow delivery
         _pageTransform  = pageTransform;
         _inFlight       = true;
         _goingToPlayer  = false;
@@ -65,38 +82,24 @@ public class BirdPickUp : MonoBehaviour
         SetPhysicsForFlight(true);
     }
 
-    /// <summary>
-    /// Called by spawner/origin to tell bird where the player is.
-    /// </summary>
+    // -------------------------------------------------------------------
     public void SetPlayerTarget(Transform target)
     {
         playerTarget = target;
     }
 
-    /// <summary>
-    /// Called by spawner to give the bird a snap point for the page.
-    /// (Usually set on the prefab in Inspector.)
-    /// </summary>
     public void SetPageSnapPoint(Transform snap)
     {
         pageHoldPoint = snap;
     }
 
-    /// <summary>
-    /// Called by spawner to define bird's home perch in the scene.
-    /// </summary>
     public void SetHomePoint(Transform t)
     {
         homePoint = t;
     }
 
-    /// <summary>
-    /// Called by PagePickup when the player takes the page.
-    /// Bird should fly back home.
-    /// </summary>
     public void ReturnHome()
     {
-        // clear any page delivery, go into "go home" mode
         _pageTransform  = null;
         _goingToPlayer  = false;
         _goingHome      = true;
@@ -105,18 +108,19 @@ public class BirdPickUp : MonoBehaviour
         SetPhysicsForFlight(true);
     }
 
+    // -------------------------------------------------------------------
     void Update()
     {
         if (!_inFlight)
             return;
 
-        // 1) Going to page
+        // -------------------------------------------------------------------
+        // 1) Going TO the page
+        // -------------------------------------------------------------------
         if (!_goingToPlayer && !_goingHome)
         {
             if (_pageTransform == null)
             {
-                // Page disappeared – abort and stop flight
-                Debug.LogWarning("[BirdPickUp] Page was destroyed during flight.");
                 StopFlight();
                 return;
             }
@@ -126,49 +130,43 @@ public class BirdPickUp : MonoBehaviour
 
             if (reached)
             {
-                // Attach page to the bird
+                // Attach page to bird
                 if (pageHoldPoint != null)
                 {
-                    // 1) Remember world scale BEFORE parenting
                     Vector3 worldScaleBefore = _pageTransform.lossyScale;
 
-                    // 2) Parent to bird
                     _pageTransform.SetParent(pageHoldPoint, worldPositionStays: false);
                     _pageTransform.localPosition = Vector3.zero;
                     _pageTransform.localRotation = Quaternion.identity;
 
-                    // 3) Restore original world scale
                     Vector3 parentScale  = pageHoldPoint.lossyScale;
                     Vector3 desiredScale = worldScaleBefore;
 
                     _pageTransform.localScale = new Vector3(
-                        parentScale.x != 0 ? desiredScale.x / parentScale.x : desiredScale.x,
-                        parentScale.y != 0 ? desiredScale.y / parentScale.y : desiredScale.y,
-                        parentScale.z != 0 ? desiredScale.z / parentScale.z : desiredScale.z
+                        desiredScale.x / parentScale.x,
+                        desiredScale.y / parentScale.y,
+                        desiredScale.z / parentScale.z
                     );
 
-                    // 4) Notify PagePickup so it can freeze physics while riding
                     var pagePickup = _pageTransform.GetComponent<PagePickup>();
-                    if (pagePickup != null)
-                    {
-                        pagePickup.OnAttachedToBird(this);
-                    }
+                    pagePickup?.OnAttachedToBird(this);
                 }
 
-                _goingToPlayer = true;  // next phase: deliver to player
+                _goingToPlayer = true;
             }
         }
-        // 2) Delivering to the player
+
+        // -------------------------------------------------------------------
+        // 2) Flying TOWARD the player
+        // -------------------------------------------------------------------
         else if (_goingToPlayer)
         {
             if (playerTarget == null)
             {
-                Debug.LogWarning("[BirdPickUp] No playerTarget set, stopping flight to player.");
                 StopFlight();
                 return;
             }
 
-            // Always use LIVE position of the player each frame
             Vector3 playerPos =
                 playerTarget.position +
                 playerTarget.forward * hoverDistance +
@@ -178,19 +176,16 @@ public class BirdPickUp : MonoBehaviour
 
             if (reached)
             {
-                // Arrived in front of player – hover there
                 _inFlight = false;
 
-                // 🔊 VO: "What's that page it picked up?"
-                if (SoundPuzzleVOController.Instance != null)
-                {
-                    SoundPuzzleVOController.Instance.CueBirdDeliverNote();
-                }
-
-                // physics stays off so it just floats
+                // VO: Page delivery
+                SoundPuzzleVOController.Instance?.CueBirdDeliverNote();
             }
         }
-        // 3) Going home (after page is grabbed)
+
+        // -------------------------------------------------------------------
+        // 3) Returning home
+        // -------------------------------------------------------------------
         else if (_goingHome)
         {
             Vector3 homePos    = homePoint ? homePoint.position  : _initialPos;
@@ -203,15 +198,14 @@ public class BirdPickUp : MonoBehaviour
                 _goingHome = false;
                 _inFlight  = false;
 
-                // Snap final rotation
                 transform.rotation = homeRot;
 
-                // Option: keep physics off so it perches solidly
                 SetPhysicsForFlight(false);
             }
         }
     }
 
+    // -------------------------------------------------------------------
     bool FlyStep(Vector3 targetWorldPos)
     {
         Vector3 toTarget = targetWorldPos - transform.position;
@@ -220,24 +214,21 @@ public class BirdPickUp : MonoBehaviour
         if (dist < arriveDistance)
             return true;
 
-        if (dist > 0.0001f)
+        Vector3 wobble = GetWobbleOffset();
+        Vector3 dir    = (toTarget + wobble).normalized;
+
+        Vector3 move = dir * flySpeed * Time.deltaTime;
+
+        if (move.magnitude > dist)
+            move = dir * dist;
+
+        transform.position += move;
+
+        Vector3 flatDir = new Vector3(dir.x, 0f, dir.z);
+        if (flatDir.sqrMagnitude > 0.0001f)
         {
-            Vector3 wobble = GetWobbleOffset();
-            Vector3 dir    = (toTarget + wobble).normalized;
-
-            Vector3 move = dir * flySpeed * Time.deltaTime;
-
-            if (move.magnitude > dist)
-                move = dir * dist;
-
-            transform.position += move;
-
-            Vector3 flatDir = new Vector3(dir.x, 0f, dir.z);
-            if (flatDir.sqrMagnitude > 0.0001f)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(flatDir.normalized, Vector3.up);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, turnSpeed * Time.deltaTime);
-            }
+            Quaternion targetRot = Quaternion.LookRotation(flatDir.normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, turnSpeed * Time.deltaTime);
         }
 
         return false;
@@ -253,7 +244,7 @@ public class BirdPickUp : MonoBehaviour
         return side + upBob;
     }
 
-    void SetPhysicsForFlight(bool inFlight)
+    void SetPhysicsForFlight(bool flight)
     {
         if (_rb)
         {
@@ -263,15 +254,12 @@ public class BirdPickUp : MonoBehaviour
             _rb.velocity       = Vector3.zero;
 #endif
             _rb.angularVelocity = Vector3.zero;
-            _rb.useGravity      = !inFlight;
-            _rb.isKinematic     = inFlight;
+            _rb.useGravity      = !flight;
+            _rb.isKinematic     = flight;
         }
 
         if (_col)
-        {
-            // Make collider a trigger while flying so we don't get stuck on planes
-            _col.isTrigger = inFlight;
-        }
+            _col.isTrigger = flight;
     }
 
     void StopFlight()
