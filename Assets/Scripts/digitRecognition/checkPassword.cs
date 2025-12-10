@@ -3,62 +3,115 @@ using UnityEngine;
 
 public class checkPassword : MonoBehaviour
 {
-    public string correctPsw="1234";
-    public TextMeshPro[] pswTexts = new TextMeshPro[4]; // 4 digits text psw
-    public TextMeshPro pswResult; // correct or incorrect
-    public passthroughCropCamera sender; // send the digit psw
+    [Header("密碼設定")]
+    public string correctPsw = "6307";
+
+    [Header("UI 顯示")]
+    public TextMeshPro[] pswTexts = new TextMeshPro[4];
+    public TextMeshPro pswResult;
+
+    [Header("輸入來源")]
+    public passthroughCropCamera sender;
+
+    [Header("音效設定（可選）")]
+    public AudioClip correctSound;
+    public AudioClip incorrectSound;
+
+    [Header("調試")]
+    public bool debugMode = true;
+
     private int writeIndex;
+    private AudioSource audioSource;
+
+    void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+    }
 
     void OnEnable()
     {
         if (sender != null && sender.setPswDigit != null)
         {
-            sender.setPswDigit.AddListener(setPsw);
+            sender.setPswDigit.AddListener(SetPsw);
         }
-    }
-    void Onsable()
-    {
-         if (sender != null && sender.setPswDigit != null)
-            sender.setPswDigit.RemoveListener(setPsw);
-    }
-    void Start()
-    {
-        
     }
 
-    // Update is called once per frame
+    void OnDisable()
+    {
+        if (sender != null && sender.setPswDigit != null)
+            sender.setPswDigit.RemoveListener(SetPsw);
+    }
+
     void Update()
     {
-        
         if (OVRInput.GetDown(OVRInput.Button.Two))
         {
-            checkPsw();
+            CheckPsw();
         }
     }
-    void setPsw( int digit)
+
+    void SetPsw(int digit)
     {
         digit = Mathf.Clamp(digit, 0, 9);
         pswTexts[writeIndex].text = digit.ToString();
         writeIndex = Mathf.Min(writeIndex + 1, pswTexts.Length);
+
+        if (debugMode)
+        {
+            Debug.Log($"[checkPassword] 輸入數字: {digit}, 當前位置: {writeIndex}");
+        }
     }
-    void checkPsw()
+
+    void CheckPsw()
     {
         string inputPsw = "";
         for (int i = 0; i < pswTexts.Length; i++)
         {
-            // inputPsw += pswTexts[i].text;
             inputPsw += string.IsNullOrEmpty(pswTexts[i].text) ? "" : pswTexts[i].text;
         }
+
+        if (debugMode)
+        {
+            Debug.Log($"[checkPassword] 檢查密碼: {inputPsw}");
+        }
+
         if (inputPsw == correctPsw)
         {
             pswResult.text = "correct";
+            PlaySound(correctSound);
+
+            if (debugMode)
+            {
+                Debug.Log("[checkPassword] 密碼正確！通知 GameManager");
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnPasswordComplete();
+            }
+            else
+            {
+                Debug.LogError("[checkPassword] GameManager.Instance is NULL!");
+            }
         }
         else
         {
             pswResult.text = "incorrect";
-             ClearAll();
+            PlaySound(incorrectSound);
+
+            if (debugMode)
+            {
+                Debug.Log($"[checkPassword] 密碼錯誤: {inputPsw} != {correctPsw}");
+            }
+
+            ClearAll();
         }
     }
+
     void ClearAll()
     {
         for (int i = 0; i < pswTexts.Length; i++)
@@ -66,5 +119,29 @@ public class checkPassword : MonoBehaviour
             pswTexts[i].text = "-";
         }
         writeIndex = 0;
+
+        if (debugMode)
+        {
+            Debug.Log("[checkPassword] 清空密碼輸入");
+        }
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
+    }
+
+    public void ResetPassword()
+    {
+        ClearAll();
+        pswResult.text = "";
+
+        if (debugMode)
+        {
+            Debug.Log("[checkPassword] 密碼系統已重置");
+        }
     }
 }
