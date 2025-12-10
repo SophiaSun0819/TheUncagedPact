@@ -12,7 +12,7 @@ public class GameManager : MonoSingleton<GameManager>
 
     [Header("Progress")]
     private int paintedWallCount = 0;
-    private bool levelCompleted = false;
+    private bool levelCompleted;
 
     [Header("Audio Effect")]
     [SerializeField] private AudioClip levelCompleteSound;
@@ -48,7 +48,7 @@ public class GameManager : MonoSingleton<GameManager>
 
     void Start()
     {
-        // Delay showing welcome message to wait for UI initialization
+        ResetLevelState();
         Invoke(nameof(ShowWelcomeMessage), 1f);
     }
 
@@ -123,34 +123,82 @@ public class GameManager : MonoSingleton<GameManager>
     /// </summary>
     private void OnLevelComplete()
     {
-        if (levelCompleted) return;
+        if (debugMode)
+        {
+            Debug.Log("[GameManager] ========================================");
+            Debug.Log("[GameManager] OnLevelComplete 被呼叫");
+            Debug.Log($"[GameManager] levelCompleted 為: {levelCompleted}");
+        }
+
+        if (levelCompleted)
+        {
+            if (debugMode)
+            {
+                Debug.Log("[GameManager] levelCompleted 是 true，直接返回");
+                Debug.Log("[GameManager] ========================================");
+            }
+            return;
+        }
 
         levelCompleted = true;
 
         if (debugMode)
         {
-            Debug.Log("[GameManager] ========================================");
             Debug.Log("[GameManager] LEVEL 1 COMPLETE - Blue Bird Puzzle Done!");
             Debug.Log("[GameManager] ========================================");
         }
 
-        // Play completion sound
         if (audioSource != null && levelCompleteSound != null)
         {
             audioSource.PlayOneShot(levelCompleteSound);
+            if (debugMode)
+            {
+                Debug.Log("[GameManager] 播放完成音效");
+            }
         }
 
-        // Display victory message
+        if (debugMode)
+        {
+            Debug.Log("[GameManager] 準備顯示成功訊息...");
+            Debug.Log($"[GameManager] UIPromptManager.Instance 是否為 null: {UIPromptManager.Instance == null}");
+        }
+
         if (UIPromptManager.Instance != null)
         {
-            UIPromptManager.Instance.ShowSuccess(
-                "FREEDOM ACHIEVED!",
-                "The blue bird soars free at last\nNo longer bound by the past\n\n\"Thank you for breaking my cage\nAnd letting me start a new page\"",
-                "Tutorial Complete! Preparing next challenge..."
-            );
+            try
+            {
+                if (debugMode)
+                {
+                    Debug.Log("[GameManager] 呼叫 ShowSuccess...");
+                }
+
+                UIPromptManager.Instance.ShowSuccess(
+                    "FREEDOM ACHIEVED!",
+                    "The blue bird soars free at last\nNo longer bound by the past\n\n\"Thank you for breaking my cage\nAnd letting me start a new page\"",
+                    "Tutorial Complete! Preparing next challenge..."
+                );
+
+                if (debugMode)
+                {
+                    Debug.Log("[GameManager] ShowSuccess 呼叫成功");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[GameManager] ShowSuccess 呼叫失败: {e.Message}");
+                Debug.LogError($"[GameManager] StackTrace: {e.StackTrace}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[GameManager] UIPromptManager.Instance is NULL!");
         }
 
-        // Trigger next level after delay
+        if (debugMode)
+        {
+            Debug.Log($"[GameManager] 準備在 {delayBeforeNextLevel} 秒後進入下一關");
+        }
+
         Invoke(nameof(TriggerNextLevel), delayBeforeNextLevel);
     }
 
@@ -247,5 +295,52 @@ public class GameManager : MonoSingleton<GameManager>
         }
 
         ShowWelcomeMessage();
+    }
+
+    /// <summary>
+    /// 重置關卡狀態
+    /// </summary>
+    private void ResetLevelState()
+    {
+        paintedWallCount = 0;
+        levelCompleted = false;
+
+        // 重置牆壁互動系統
+        var wallInteraction = FindFirstObjectByType<EffectMeshWallInteraction>();
+        if (wallInteraction != null)
+        {
+            wallInteraction.ResetAllWalls();
+
+            if (debugMode)
+            {
+                Debug.Log("[GameManager] 牆壁互動系統已重置");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] 找不到 EffectMeshWallInteraction！");
+        }
+
+        // 重置顏色變換器（如果需要的話）
+        var colorChanger = FindFirstObjectByType<ForceWallColorChanger>();
+        if (colorChanger != null)
+        {
+            colorChanger.wallColor = Color.white;
+            colorChanger.ManualChange();
+
+            if (debugMode)
+            {
+                Debug.Log("[GameManager] 顏色變換器已重置");
+            }
+        }
+
+        if (debugMode)
+        {
+            Debug.Log("[GameManager] ========================================");
+            Debug.Log("[GameManager] 關卡狀態已重置");
+            Debug.Log($"[GameManager] paintedWallCount: {paintedWallCount}");
+            Debug.Log($"[GameManager] levelCompleted: {levelCompleted}");
+            Debug.Log("[GameManager] ========================================");
+        }
     }
 }
