@@ -1,5 +1,6 @@
 using UnityEngine;
 using Meta.XR.MRUtilityKit;
+using System.Collections.Generic;
 
 /// <summary>
 /// Effect Mesh 牆壁互動控制器
@@ -46,12 +47,15 @@ public class EffectMeshWallInteraction : MonoBehaviour
     [SerializeField] private WallClue[] wallClues = new WallClue[4];
 
     [Header("互動設定")]
-    [SerializeField] private float interactionDistance = 0.5f; // 互動距離（米）
+    [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private float interactionCooldown = 1f;
     [SerializeField] private LayerMask wallLayerMask = -1;
 
     [Header("調試")]
     [SerializeField] private bool debugMode = true;
+
+    [Header("線索追踪")]
+    private List<int> unshownClueIndices = new List<int>();
 
     private Transform playerCamera;
     private float lastInteractionTime = 0f;
@@ -72,6 +76,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
 
         mruk = FindObjectOfType<MRUK>();
         InitializeDefaultClues();
+        ResetUnshownClues();
 
         if (debugMode)
         {
@@ -82,8 +87,19 @@ public class EffectMeshWallInteraction : MonoBehaviour
 
     void Update()
     {
-        // 檢查玩家是否在看向牆壁並點擊
         CheckForWallInteraction();
+    }
+
+    /// <summary>
+    /// 重置未顯示的線索列表
+    /// </summary>
+    private void ResetUnshownClues()
+    {
+        unshownClueIndices.Clear();
+        for (int i = 0; i < wallClues.Length; i++)
+        {
+            unshownClueIndices.Add(i);
+        }
     }
 
     /// <summary>
@@ -115,6 +131,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
         }
 
         if (!inputDetected) return;
+
         Debug.Log("[EffectMeshWall] 準備發射射線...");
         Debug.Log($"[EffectMeshWall] 起點: {playerCamera.position}");
         Debug.Log($"[EffectMeshWall] 方向: {playerCamera.forward}");
@@ -137,7 +154,9 @@ public class EffectMeshWallInteraction : MonoBehaviour
             }
         }
         else
+        {
             Debug.Log("[EffectMeshWall] 沒有擊中任何東西");
+        }
     }
 
     /// <summary>
@@ -174,73 +193,57 @@ public class EffectMeshWallInteraction : MonoBehaviour
     }
 
     /// <summary>
-    /// 當牆壁被點擊時
+    /// 當墻壁被點擊時 - 隨機顯示線索（確保每個線索至少顯示一次）
     /// </summary>
     private void OnWallClicked(RaycastHit hit)
     {
         lastInteractionTime = Time.time;
 
-        // 判斷是哪一面牆
-        WallDirection direction = DetermineWallDirection(hit);
-
-        if (debugMode)
+        if (wallClues == null || wallClues.Length == 0)
         {
-            Debug.Log($"[EffectMeshWall] 玩家點擊了 {direction} 牆");
+            Debug.LogError("[EffectMeshWall] No wall clues configured!");
+            return;
         }
 
-        // 顯示對應的線索
-        ShowClueForWall(direction);
-    }
-
-    /// <summary>
-    /// 判斷牆壁方向
-    /// </summary>
-    private WallDirection DetermineWallDirection(RaycastHit hit)
-    {
-        // 取得牆壁的法線方向
-        Vector3 normal = hit.normal;
-
-        // 將法線轉換為世界空間方向
-        Vector3 worldNormal = normal.normalized;
-
-        // 計算與各方向的點積
-        float dotNorth = Vector3.Dot(worldNormal, Vector3.forward);  // Z+
-        float dotSouth = Vector3.Dot(worldNormal, Vector3.back);     // Z-
-        float dotEast = Vector3.Dot(worldNormal, Vector3.right);     // X+
-        float dotWest = Vector3.Dot(worldNormal, Vector3.left);      // X-
-
-        // 找出最大值
-        float maxDot = Mathf.Max(dotNorth, dotSouth, dotEast, dotWest);
-
-        if (maxDot == dotNorth)
-            return WallDirection.North;
-        else if (maxDot == dotSouth)
-            return WallDirection.South;
-        else if (maxDot == dotEast)
-            return WallDirection.East;
-        else
-            return WallDirection.West;
-    }
-
-    /// <summary>
-    /// 顯示指定牆壁的線索
-    /// </summary>
-    private void ShowClueForWall(WallDirection direction)
-    {
-        // 找到對應的線索
-        WallClue clue = null;
-        foreach (var c in wallClues)
+        // 如果所有線索都顯示過了，重置列表
+        if (unshownClueIndices.Count == 0)
         {
-            if (c.direction == direction)
+            ResetUnshownClues();
+            if (debugMode)
             {
-                clue = c;
-                break;
+                Debug.Log("[EffectMeshWall] 所有線索已顯示，重置列表");
             }
         }
 
+        // 從未顯示的線索中隨機選一個
+        int randomListIndex = Random.Range(0, unshownClueIndices.Count);
+        int clueIndex = unshownClueIndices[randomListIndex];
+
+        // 從列表中移除（確保短期內不會重複）
+        unshownClueIndices.RemoveAt(randomListIndex);
+
+        WallClue selectedClue = wallClues[clueIndex];
+
+        if (debugMode)
+        {
+            Debug.Log($"[EffectMeshWall] =============================");
+            Debug.Log($"[EffectMeshWall] 玩家點擊了牆壁: {hit.collider.gameObject.name}");
+            Debug.Log($"[EffectMeshWall] 顯示線索 [{clueIndex}]: {selectedClue.clueTitle}");
+            Debug.Log($"[EffectMeshWall] 剩餘未顯示線索數: {unshownClueIndices.Count}");
+            Debug.Log($"[EffectMeshWall] =============================");
+        }
+
+        ShowClue(selectedClue);
+    }
+
+    /// <summary>
+    /// 顯示線索
+    /// </summary>
+    private void ShowClue(WallClue clue)
+    {
         if (clue == null)
         {
-            Debug.LogWarning($"[EffectMeshWall] 找不到 {direction} 牆的線索設定");
+            Debug.LogWarning($"[EffectMeshWall] Clue is null!");
             return;
         }
 
@@ -249,7 +252,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
         {
             UIPromptManager.Instance?.ShowPrompt(
                 "Already Complete",
-                $"This wall has already been painted with the correct color.",
+                $"This clue has already been discovered.",
                 ""
             );
             return;
@@ -266,7 +269,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
 
             if (debugMode)
             {
-                Debug.Log($"[EffectMeshWall] 顯示 {direction} 牆的線索");
+                Debug.Log($"[EffectMeshWall] 顯示線索: {clue.clueTitle}");
             }
         }
         else
@@ -347,9 +350,9 @@ public class EffectMeshWallInteraction : MonoBehaviour
         string errorMessage = GetColorErrorMessage(attemptedColor);
 
         UIPromptManager.Instance?.ShowError(
-            " Wrong Color!",
+            "Wrong Color!",
             errorMessage,
-            $" Hint: Read all four walls carefully\nWhat do the letters spell?"
+            $"Hint: Read all four walls carefully\nWhat do the letters spell?"
         );
     }
 
@@ -415,7 +418,7 @@ public class EffectMeshWallInteraction : MonoBehaviour
         wallClues[3].direction = WallDirection.West;
         wallClues[3].clueTitle = "Promise of Tomorrow";
         wallClues[3].clueContent = "E is for ESCAPE\nFind the color of endless skies\nWhere freedom truly lies";
-        wallClues[3].clueHint = "Hint: Color of the sky... B-L-U-E";
+        wallClues[3].clueHint = "Hint: Color of the sky...";
         wallClues[3].requiredColor = Color.blue;
     }
 
@@ -469,6 +472,8 @@ public class EffectMeshWallInteraction : MonoBehaviour
         {
             clue.isPainted = false;
         }
+
+        ResetUnshownClues();
 
         if (debugMode)
         {
