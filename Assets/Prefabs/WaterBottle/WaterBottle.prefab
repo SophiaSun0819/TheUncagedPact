@@ -991,7 +991,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockId: f8766c17-aaf8-4b55-9431-de8deea83842
-  instanceId: 1c833665-6534-4cdb-8664-3eebac40a0bd
+  instanceId: a3702ca7-1e46-4246-9699-503db2c90f34
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: f8338144-8280-4ff6-9455-ae2bb9c20fe8
@@ -1593,7 +1593,7 @@ GameObject:
   - component: {fileID: 5881908293086864683}
   m_Layer: 0
   m_Name: BirdTrigger
-  m_TagString: Untagged
+  m_TagString: ChangeColorTrigger
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2296,6 +2296,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -5568371526223589888, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2449524474331732204}
+    - targetCorrespondingSourceObject: {fileID: -5568371526223589888, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8926792073417081365}
   m_SourcePrefab: {fileID: 100100000, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
 --- !u!4 &1939697954274079992 stripped
 Transform:
@@ -2326,8 +2329,49 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.018883573, y: 0.016405892, z: 0.029850626}
-  m_Center: {x: 0, y: 3.1051406e-10, z: 0.0045626806}
+  m_Size: {x: 0.018883573, y: 0.016405892, z: 0.014397866}
+  m_Center: {x: 0, y: 5.982398e-17, z: -0.0031637102}
+--- !u!114 &8926792073417081365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3447685728303619347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ebc363bb05e6ca4ca2a2b87b1599775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  eyeballTag: Eye
+  waterRenderer: {fileID: 9120373931613758924}
+  shaderFillProperty: _Fill
+  currentFill01: 0.5
+  fullFill01: 1
+  fillPerEyeball: 0.1666
+  sfxSplash: {fileID: 8300000, guid: ac7531287e63d4a4c875e577ea12470a, type: 3}
+  voWaterRising: {fileID: 8300000, guid: 6f4c26586e3c791448cf340cfd11536e, type: 3}
+  voWaterStillLow: {fileID: 8300000, guid: 0e31e84db02eaf540b0fb79d6e5f343f, type: 3}
+  voWaterTooLow: {fileID: 8300000, guid: ba1e84231b11351418964ec848fd59e7, type: 3}
+  voWaterReady: {fileID: 8300000, guid: b1c8c559d65ea174a96ad894d746f6e0, type: 3}
+  sfxWaterComplete: {fileID: 8300000, guid: 84e82824661e0ba4bb2ed0ca4dc95828, type: 3}
+  onWaterBottleComplete:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  waterBottleComplete: 0
+  readyThreshold: 0.85
 --- !u!4 &4236391855084141126 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6364950165352715947, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
@@ -2443,5 +2487,10 @@ Rigidbody:
 --- !u!4 &7377314838115699670 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8863353157047638213, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
+  m_PrefabInstance: {fileID: 2117123375908492051}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &9120373931613758924 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7202271454713460447, guid: e662d240bfa560f4b9215e9ff9e367a1, type: 3}
   m_PrefabInstance: {fileID: 2117123375908492051}
   m_PrefabAsset: {fileID: 0}

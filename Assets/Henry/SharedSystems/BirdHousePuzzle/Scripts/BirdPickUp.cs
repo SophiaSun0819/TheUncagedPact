@@ -178,15 +178,22 @@ public class BirdPickUp : MonoBehaviour
 
             if (reached)
             {
-                // Arrived in front of player – hover there with physics off until page is taken
+                // Arrived in front of player – hover there
                 _inFlight = false;
+
+                // 🔊 VO: "What's that page it picked up?"
+                if (SoundPuzzleVOController.Instance != null)
+                {
+                    SoundPuzzleVOController.Instance.CueBirdDeliverNote();
+                }
+
                 // physics stays off so it just floats
             }
         }
         // 3) Going home (after page is grabbed)
         else if (_goingHome)
         {
-            Vector3 homePos   = homePoint ? homePoint.position  : _initialPos;
+            Vector3 homePos    = homePoint ? homePoint.position  : _initialPos;
             Quaternion homeRot = homePoint ? homePoint.rotation : _initialRot;
 
             bool reached = FlyStep(homePos);
@@ -205,10 +212,6 @@ public class BirdPickUp : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// One flight step towards a world-space position.
-    /// Returns true if we reached the target (within arriveDistance).
-    /// </summary>
     bool FlyStep(Vector3 targetWorldPos)
     {
         Vector3 toTarget = targetWorldPos - transform.position;
@@ -219,7 +222,6 @@ public class BirdPickUp : MonoBehaviour
 
         if (dist > 0.0001f)
         {
-            // Add wobble so it's not a straight line
             Vector3 wobble = GetWobbleOffset();
             Vector3 dir    = (toTarget + wobble).normalized;
 
@@ -245,7 +247,6 @@ public class BirdPickUp : MonoBehaviour
     {
         float t = Time.time * wobbleFrequency;
 
-        // sideways wobble + slight vertical bob
         Vector3 side  = _wobbleSideDir * Mathf.Sin(t) * wobbleRadius;
         Vector3 upBob = Vector3.up * Mathf.Cos(t) * (wobbleRadius * 0.5f);
 

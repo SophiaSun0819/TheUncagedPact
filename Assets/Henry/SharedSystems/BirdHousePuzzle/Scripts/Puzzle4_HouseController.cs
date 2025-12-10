@@ -3,7 +3,6 @@ using System;
 
 public class Puzzle4_HouseController : MonoBehaviour
 {
-    // 🔥 Singleton instance so other scripts (SoundBox, etc.) can find us
     public static Puzzle4_HouseController Instance;
 
     void Awake()
@@ -67,12 +66,28 @@ public class Puzzle4_HouseController : MonoBehaviour
         var col = piece.GetComponent<Collider>();
         if (col) col.enabled = false;
 
+        // disable grab components, etc.
+        if (piece.disableOnLock != null)
+        {
+            foreach (var b in piece.disableOnLock)
+                if (b) b.enabled = false;
+        }
+
         piece.isLocked = true;
         _placedCount++;
 
         // 🔊 play snap sfx for each piece
         if (pieceSnapSfx != null)
             pieceSnapSfx.Play();
+
+        // 🔊 VO flow for building the cage:
+        // 1) "Pick up first piece" (only actually plays the first time)
+        // 2) "That fits nicely." after placing a piece in the outline.
+        if (SoundPuzzleVOController.Instance != null)
+        {
+            SoundPuzzleVOController.Instance.CuePickUpFirstPiece();
+            SoundPuzzleVOController.Instance.CuePieceRight();
+        }
 
         if (_placedCount >= slots.Length)
             CompletePuzzle();
@@ -89,11 +104,17 @@ public class Puzzle4_HouseController : MonoBehaviour
         if (finalHousePrefab)
             finalHousePrefab.SetActive(true);
 
-        // 🔊 play "house complete" sfx once
+        // 🔊 SFX: house/cage built
         if (houseCompleteSfx != null)
             houseCompleteSfx.Play();
 
-        // Enable sound puzzle boxes
+        // 🔊 VO: cage / house complete ("cozy home" etc.)
+        if (SoundPuzzleVOController.Instance != null)
+        {
+            SoundPuzzleVOController.Instance.CueCageComplete();
+        }
+
+        // Enable sound puzzle boxes for bird song puzzle
         if (birdSoundBoxes != null)
         {
             foreach (var go in birdSoundBoxes)
@@ -110,7 +131,14 @@ public class Puzzle4_HouseController : MonoBehaviour
         if (_correctBirds >= requiredBirds)
         {
             _birdPuzzleDone = true;
+
             BirdPuzzleCompleted?.Invoke();
+
+            // 🔊 VO: "Yes, it recognized the song!"
+            if (SoundPuzzleVOController.Instance != null)
+            {
+                SoundPuzzleVOController.Instance.CueSongRecognized();
+            }
         }
     }
 }

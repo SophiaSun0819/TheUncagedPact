@@ -10,8 +10,7 @@ public class SoundBall : MonoBehaviour
 
     bool _isLocked = false;
 
-    // We still remember the original WORLD scale for reset,
-    // but we won't touch scale when locking.
+    // We remember the original WORLD scale for snap/reset
     Vector3 _originalWorldScale;
 
     // For out-of-bounds reset
@@ -51,17 +50,21 @@ public class SoundBall : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when the bird is placed correctly on its perch.
+    /// Public helper so SoundBox can restore original world scale after snapping.
+    /// </summary>
+    public void ApplyOriginalScale()
+    {
+        ApplyWorldScale(_originalWorldScale);
+    }
+
+    /// <summary>
+    /// Called when the ball is placed correctly in its box.
     /// Freezes it, disables grabbing & collisions.
     /// </summary>
     public void Lock()
     {
         if (_isLocked) return;
         _isLocked = true;
-
-        // 🚫 IMPORTANT: Do NOT change scale here.
-        // The bird was already unparented and snapped by SoundBox,
-        // so its size is already correct.
 
         // Stop all physics
         var rb = GetComponent<Rigidbody>();
@@ -77,7 +80,7 @@ public class SoundBall : MonoBehaviour
             rb.isKinematic     = true;
         }
 
-        // Disable collider so other birds can't knock it off
+        // Disable collider so other balls can't knock it off
         var col = GetComponent<Collider>();
         if (col)
         {
@@ -95,12 +98,12 @@ public class SoundBall : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by OutOfBoundsZone when the bird falls off the puzzle.
+    /// Called by OutOfBoundsZone when the ball falls off the puzzle.
     /// Resets back to its original spawn position.
     /// </summary>
     public void ResetToHome()
     {
-        // If it's already locked on a perch, don't move it back
+        // If it's already locked in a box, don't move it back
         if (_isLocked) return;
 
         // Restore parent
@@ -126,14 +129,14 @@ public class SoundBall : MonoBehaviour
             rb.isKinematic     = false;
         }
 
-        // Make sure collider & grab scripts are active for free birds
+        // Make sure collider & grab scripts are active for free balls
         var col = GetComponent<Collider>();
         if (col)
         {
             col.enabled = true;
         }
 
-        if (disableOnLock != null && !_isLocked)
+        if (disableOnLock != null)
         {
             foreach (var mb in disableOnLock)
             {
