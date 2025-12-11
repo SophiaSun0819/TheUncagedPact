@@ -7,8 +7,12 @@ public class SoundBox : MonoBehaviour
     public int correctSoundID = 0;
 
     [Header("Snapping")]
-    public Transform snapPoint;
+    public Transform snapPoint;              // optional now, we can skip snap if you want
     public bool snapOnlyIfCorrect = true;
+
+    [Header("Perched Bird Swap")]
+    [Tooltip("Pre-placed bird on the ledge. Starts disabled, gets enabled on correct match.")]
+    public GameObject perchedBird;           // ← assign your ledge bird here
 
     [Header("Events")]
     public UnityEvent OnCorrect;
@@ -16,7 +20,7 @@ public class SoundBox : MonoBehaviour
 
     bool _alreadySatisfied = false;
 
-    // this ensures BirdOnLedge VO only plays once globally
+    // ensures BirdOnLedge VO only plays once globally
     private static bool _birdOnLedgeVoPlayed = false;
 
     private void OnTriggerEnter(Collider other)
@@ -35,34 +39,34 @@ public class SoundBox : MonoBehaviour
             {
                 _alreadySatisfied = true;
 
+                // notify puzzle controller: one more correct bird placed
                 if (Puzzle4_HouseController.Instance != null)
                     Puzzle4_HouseController.Instance.RegisterCorrectBird();
             }
 
             OnCorrect?.Invoke();
 
-            // 🔊 First correct bird placed → BirdOnLedge VO
+            // 🔊 First correct bird placed → BirdOnLedge VO (only once across all boxes)
             if (!_birdOnLedgeVoPlayed && SoundPuzzleVOController.Instance != null)
             {
                 _birdOnLedgeVoPlayed = true;
                 SoundPuzzleVOController.Instance.CueBirdOnLedge();
             }
 
-            // detach from hand
-            Transform t = ball.transform;
-            t.SetParent(null, true);
-
-            // snap
-            if (snapPoint != null)
+            // --- ENABLE PERCHED BIRD & REMOVE FLYING BALL ---
+            if (perchedBird != null)
             {
-                t.position = snapPoint.position;
-                t.rotation = snapPoint.rotation;
+                perchedBird.SetActive(true);
             }
 
-            // fix world scale
-            ball.ApplyOriginalScale();
+            // Option A: just disable the flying ball so it disappears
+            ball.gameObject.SetActive(false);
 
-            // lock
+            // Option B (if you prefer destruction instead):
+            // GameObject.Destroy(ball.gameObject);
+            // (you can swap to this later if you want)
+
+            // We still lock it in case something re-enables it accidentally
             ball.Lock();
         }
         else
@@ -75,13 +79,14 @@ public class SoundBox : MonoBehaviour
                 SoundPuzzleVOController.Instance.CueWrongSoundBall();
             }
 
+            // Optional: snap wrong ball visually even if it's wrong
             if (!snapOnlyIfCorrect && snapPoint != null)
             {
                 Transform t = ball.transform;
                 t.SetParent(null, true);
                 t.position = snapPoint.position;
                 t.rotation = snapPoint.rotation;
-                ball.ApplyOriginalScale();
+                // localScale stays as-is
             }
         }
     }
