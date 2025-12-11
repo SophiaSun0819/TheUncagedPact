@@ -41,6 +41,13 @@ public class SoundPuzzleVOController : MonoBehaviour
     [Tooltip("VO when all birds are in the correct boxes (song recognized).")]
     public AudioClip voSongRecognized;
 
+    [Header("Timer VO")]
+    [Tooltip("Day 5 warning: 'Only a couple days left.'")]
+    public AudioClip voTimerDay5Warning;
+
+    [Tooltip("Day 7 fail line: 'Oh no, I couldn't escape in time.'")]
+    public AudioClip voTimerFailDay7;
+
     // --- queue + state so VO does NOT overlap ---
     private readonly Queue<AudioClip> _queue = new Queue<AudioClip>();
     private bool _isPlayingQueue = false;
@@ -55,7 +62,11 @@ public class SoundPuzzleVOController : MonoBehaviour
     private bool _playedWrongBallHint = false;
     private bool _playedSongRecognized = false;
     private bool _playedBirdDeliverNote = false;
-    // BirdOnLedge can be spammy if we want; leave without a guard.
+
+    // timer VO flags
+    private bool _playedTimerDay5Warning = false;
+    private bool _playedTimerFailDay7    = false;
+    // BirdOnLedge can fire multiple times if desired.
 
     private void Awake()
     {
@@ -112,7 +123,6 @@ public class SoundPuzzleVOController : MonoBehaviour
 
     public void CueBirdOnLedge()
     {
-        // This one can be allowed multiple times if desired:
         EnqueueClip(voBirdOnLedge);
     }
 
@@ -132,10 +142,8 @@ public class SoundPuzzleVOController : MonoBehaviour
 
     public void CueWrongSoundBall()
     {
-        // If you want this to be repeatable, remove the guard.
         if (_playedWrongBallHint) return;
         _playedWrongBallHint = true;
-
         EnqueueClip(voWrongSoundBall);
     }
 
@@ -143,8 +151,22 @@ public class SoundPuzzleVOController : MonoBehaviour
     {
         if (_playedSongRecognized) return;
         _playedSongRecognized = true;
-
         EnqueueClip(voSongRecognized);
+    }
+
+    // ---- NEW: timer VO ----
+    public void CueTimerDay5Warning()
+    {
+        if (_playedTimerDay5Warning) return;
+        _playedTimerDay5Warning = true;
+        EnqueueClip(voTimerDay5Warning);
+    }
+
+    public void CueTimerFailDay7()
+    {
+        if (_playedTimerFailDay7) return;
+        _playedTimerFailDay7 = true;
+        EnqueueClip(voTimerFailDay7);
     }
 
     // ---------- INTERNAL QUEUE LOGIC ----------
@@ -178,6 +200,7 @@ public class SoundPuzzleVOController : MonoBehaviour
                 yield return null;
             }
 
+            // tiny gap so lines don't feel smashed together
             yield return new WaitForSeconds(0.05f);
         }
 
