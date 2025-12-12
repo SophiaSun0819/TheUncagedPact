@@ -63,7 +63,7 @@ public class OriBirdSpawnButton : MonoBehaviour
             // Inject ChangeColorTrigger (pitcher lip)
             if (changeColorTrigger != null)
             {
-                colorLogic.changeColorTrigger = changeColorTrigger;
+               // colorLogic.changeColorTrigger = changeColorTrigger;
             }
             else
             {
