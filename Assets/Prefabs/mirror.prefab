@@ -343,8 +343,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   openSound: {fileID: 0}
   closeSound: {fileID: 0}
-  successSound: {fileID: 0}
-  errorSound: {fileID: 0}
+  successSound: {fileID: 8300000, guid: 84e82824661e0ba4bb2ed0ca4dc95828, type: 3}
+  errorSound: {fileID: 8300000, guid: 53910a763017cb34cac711323fe08ff9, type: 3}
   defaultStyle:
     titleColor: {r: 1, g: 1, b: 1, a: 1}
     titleFontSize: 36
@@ -353,23 +353,23 @@ MonoBehaviour:
     hintColor: {r: 1, g: 1, b: 0.5, a: 1}
     hintFontSize: 20
   successStyle:
-    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 0.55135274, g: 0.990566, b: 0.5622614, a: 1}
     titleFontSize: 36
-    contentColor: {r: 1, g: 1, b: 1, a: 1}
+    contentColor: {r: 0.80240214, g: 0.9764151, b: 0.7461285, a: 1}
     contentFontSize: 24
     hintColor: {r: 1, g: 1, b: 0.5, a: 1}
     hintFontSize: 20
   errorStyle:
-    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 0.36320752, b: 0.36320752, a: 1}
     titleFontSize: 36
-    contentColor: {r: 1, g: 1, b: 1, a: 1}
+    contentColor: {r: 1, g: 0.6084906, b: 0.6084906, a: 1}
     contentFontSize: 24
     hintColor: {r: 1, g: 1, b: 0.5, a: 1}
     hintFontSize: 20
   clueStyle:
-    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 0.54347634, g: 0.8846005, b: 0.9764151, a: 1}
     titleFontSize: 36
-    contentColor: {r: 1, g: 1, b: 1, a: 1}
+    contentColor: {r: 0.6462264, g: 0.81899965, b: 1, a: 1}
     contentFontSize: 24
     hintColor: {r: 1, g: 1, b: 0.5, a: 1}
     hintFontSize: 20
